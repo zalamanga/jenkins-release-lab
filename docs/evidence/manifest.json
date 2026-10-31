@@ -1,0 +1,55 @@
+{
+  "source_commit": "67f4557b0adb7a0157b0fb8a1ae5565cd16ade9a",
+  "upstream_commit": "e3547e69851165fa7b20154502aa05ad8d3481cd",
+  "ci_run": "https://github.com/zalamanga/jenkins-release-lab/actions/runs/41211924065",
+  "screenshots_origin": "Actual Jenkins classic UI on the Ubuntu GitHub Actions runner",
+  "python_tests": 34,
+  "jenkins_version": "2.580.2",
+  "screenshot_files": [
+    {
+      "file": "../screenshots/01-job-overview.png",
+      "width": 1440,
+      "height": 1277,
+      "bytes": 206100,
+      "sha256": "e54710db32d0b12c13d13088933d1f0329d98f2c282a4b79ea880ed302df63c7"
+    },
+    {
+      "file": "../screenshots/02-successful-tests.png",
+      "width": 1440,
+      "height": 1100,
+      "bytes": 79132,
+      "sha256": "9a0be1c7e3039783dd5b6e39e61bcc8e4265ef4f65618b2c3ee7ddd3e8c0701d"
+    },
+    {
+      "file": "../screenshots/03-rejected-release.png",
+      "width": 1440,
+      "height": 3081,
+      "bytes": 510534,
+      "sha256": "e26872e59580c85f3aa0e37fbae4c82545dc2bd063d4305d9e7f77ff546844ed"
+    },
+    {
+      "file": "../screenshots/04-rollback-report.png",
+      "width": 1440,
+      "height": 1100,
+      "bytes": 97779,
+      "sha256": "8eb8c1f9277bb87684f37e69eb23ed493168e176cd853234ab788f359a46c3f3"
+    }
+  ],
+  "windows_build_numbers": [
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "windows_failed_http_status": 504,
+  "windows_ui_result": "PASS",
+  "ci_build_numbers": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "ci_failed_http_status": 504
+}

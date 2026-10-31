@@ -1,0 +1,46 @@
+{
+  "result": "PASS",
+  "interface": "Unmodified Jenkins classic UI",
+  "actualJenkinsVersion": "2.580.2",
+  "checks": [
+    {
+      "view": "job-overview",
+      "job": "reserveflow-release",
+      "buildNumbers": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "view": "successful-test-results",
+      "build": 2,
+      "actualTestCount": 8
+    },
+    {
+      "view": "rejected-release",
+      "build": 3,
+      "expectedResult": "FAILURE",
+      "activePreserved": true
+    },
+    {
+      "view": "rollback-report",
+      "build": 4,
+      "exactOriginalImage": true
+    },
+    {
+      "view": "job-navigation",
+      "parametersFormOpened": true,
+      "noExtraBuildTriggered": true
+    }
+  ],
+  "screenshotCount": 4,
+  "viewport": {
+    "width": 1440,
+    "height": 1100
+  },
+  "pageErrors": [],
+  "scope": "Desktop evidence of actual Jenkins jobs. No custom dashboard or blanket vendor UI accessibility certification."
+}

@@ -1,0 +1,1395 @@
+{
+  "schema_version": 1,
+  "result": "PASS",
+  "job": "reserveflow-release",
+  "jenkins_version": "2.580.2",
+  "controller_executors": 0,
+  "agent_executors": 1,
+  "upstream_commit": "e3547e69851165fa7b20154502aa05ad8d3481cd",
+  "runs": [
+    {
+      "number": 5,
+      "action": "DEPLOY_GOOD",
+      "result": "SUCCESS",
+      "duration_ms": 90829,
+      "deployment": {
+        "action": "DEPLOY_GOOD",
+        "after": {
+          "app_commit": "e3547e69851165fa7b20154502aa05ad8d3481cd",
+          "build": "5",
+          "container": "jenkins-release-lab-blue",
+          "image": "jenkins-release-lab-api:lab-67f4557b0adb-b5",
+          "image_id": "sha256:9df2a53a47f59ff1fcf0dd6f2a1cc747c4ee2eb5ee03f1642fcb590d1b2f0b3c",
+          "lab_commit": "67f4557b0adb7a0157b0fb8a1ae5565cd16ade9a",
+          "release": "lab-67f4557b0adb-b5",
+          "slot": "blue"
+        },
+        "before": null,
+        "build": "5",
+        "candidate": {
+          "app_commit": "e3547e69851165fa7b20154502aa05ad8d3481cd",
+          "build": "5",
+          "container": "jenkins-release-lab-blue",
+          "image": "jenkins-release-lab-api:lab-67f4557b0adb-b5",
+          "image_id": "sha256:9df2a53a47f59ff1fcf0dd6f2a1cc747c4ee2eb5ee03f1642fcb590d1b2f0b3c",
+          "lab_commit": "67f4557b0adb7a0157b0fb8a1ae5565cd16ade9a",
+          "release": "lab-67f4557b0adb-b5",
+          "slot": "blue"
+        },
+        "lab_commit": "67f4557b0adb7a0157b0fb8a1ae5565cd16ade9a",
+        "recorded_at": "2026-10-31T14:50:36Z",
+        "recovered": false,
+        "status": "SUCCESS",
+        "switched": true
+      },
+      "proof": {
+        "active": {
+          "app_commit": "e3547e69851165fa7b20154502aa05ad8d3481cd",
+          "build": "5",
+          "container": "jenkins-release-lab-blue",
+          "image": "jenkins-release-lab-api:lab-67f4557b0adb-b5",
+          "image_id": "sha256:9df2a53a47f59ff1fcf0dd6f2a1cc747c4ee2eb5ee03f1642fcb590d1b2f0b3c",
+          "lab_commit": "67f4557b0adb7a0157b0fb8a1ae5565cd16ade9a",
+          "release": "lab-67f4557b0adb-b5",
+          "slot": "blue"
+        },
+        "container": {
+          "id": "031ae95d79f6eedd15854d30b7402a12eb714502a0e0023ef684907785f942ae",
+          "image_id": "sha256:9df2a53a47f59ff1fcf0dd6f2a1cc747c4ee2eb5ee03f1642fcb590d1b2f0b3c",
+          "release": "lab-67f4557b0adb-b5",
+          "running": true,
+          "slot": "blue"
+        },
+        "gateway": {
+          "healthy": true,
+          "release": "lab-67f4557b0adb-b5",
+          "slot": "blue",
+          "status": 200
+        },
+        "metadata_source": "nginx proxy headers",
+        "recorded_at": "2026-10-31T14:51:34Z",
+        "state_sha256": "0d949ff58c15754edbadf22cb537c1e2de4dd4317bab699e96331068f9ce8987"
+      },
+      "tests": {
+        "totalCount": 8,
+        "passCount": 8,
+        "failCount": 0,
+        "skipCount": 0
+      },
+      "smoke_probes": {
+        "candidate-smoke": {
+          "passed": true,
+          "requests": [
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/healthz",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 401,
+              "method": "GET",
+              "path": "/v1/products",
+              "replayed": false,
+              "status": 401
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/products",
+              "replayed": false,
+              "status": 201
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 201
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": true,
+              "status": 201
+            },
+            {
+              "expected_status": 409,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 409
+            },
+            {
+              "expected_status": 404,
+              "method": "GET",
+              "path": "/v1/reservations/1",
+              "replayed": false,
+              "status": 404
+            },
+            {
+              "expected_status": 404,
+              "method": "GET",
+              "path": "/v1/products/1",
+              "replayed": false,
+              "status": 404
+            },
+            {
+              "expected_status": 409,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 409
+            },
+            {
+              "expected_status": 200,
+              "method": "POST",
+              "path": "/v1/reservations/1/confirm",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/v1/products/1",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/v1/audit?limit=100",
+              "replayed": false,
+              "status": 200
+            }
+          ]
+        },
+        "smoke": {
+          "passed": true,
+          "requests": [
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/healthz",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 401,
+              "method": "GET",
+              "path": "/v1/products",
+              "replayed": false,
+              "status": 401
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/products",
+              "replayed": false,
+              "status": 201
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 201
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": true,
+              "status": 201
+            },
+            {
+              "expected_status": 409,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 409
+            },
+            {
+              "expected_status": 404,
+              "method": "GET",
+              "path": "/v1/reservations/2",
+              "replayed": false,
+              "status": 404
+            },
+            {
+              "expected_status": 404,
+              "method": "GET",
+              "path": "/v1/products/2",
+              "replayed": false,
+              "status": 404
+            },
+            {
+              "expected_status": 409,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 409
+            },
+            {
+              "expected_status": 200,
+              "method": "POST",
+              "path": "/v1/reservations/2/confirm",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/v1/products/2",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/v1/audit?limit=100",
+              "replayed": false,
+              "status": 200
+            }
+          ]
+        },
+        "postcheck": {
+          "passed": true,
+          "requests": [
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/healthz",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 401,
+              "method": "GET",
+              "path": "/v1/products",
+              "replayed": false,
+              "status": 401
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/products",
+              "replayed": false,
+              "status": 201
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 201
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": true,
+              "status": 201
+            },
+            {
+              "expected_status": 409,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 409
+            },
+            {
+              "expected_status": 404,
+              "method": "GET",
+              "path": "/v1/reservations/3",
+              "replayed": false,
+              "status": 404
+            },
+            {
+              "expected_status": 404,
+              "method": "GET",
+              "path": "/v1/products/3",
+              "replayed": false,
+              "status": 404
+            },
+            {
+              "expected_status": 409,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 409
+            },
+            {
+              "expected_status": 200,
+              "method": "POST",
+              "path": "/v1/reservations/3/confirm",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/v1/products/3",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/v1/audit?limit=100",
+              "replayed": false,
+              "status": 200
+            }
+          ]
+        }
+      },
+      "persistence_marker_preserved": true
+    },
+    {
+      "number": 6,
+      "action": "DEPLOY_GOOD",
+      "result": "SUCCESS",
+      "duration_ms": 38773,
+      "deployment": {
+        "action": "DEPLOY_GOOD",
+        "after": {
+          "app_commit": "e3547e69851165fa7b20154502aa05ad8d3481cd",
+          "build": "6",
+          "container": "jenkins-release-lab-green",
+          "image": "jenkins-release-lab-api:lab-67f4557b0adb-b6",
+          "image_id": "sha256:bf5ada56574375e6a70c41ffcbfcb2461b2fbb8b68f3c62a284f81367bd40af9",
+          "lab_commit": "67f4557b0adb7a0157b0fb8a1ae5565cd16ade9a",
+          "release": "lab-67f4557b0adb-b6",
+          "slot": "green"
+        },
+        "before": {
+          "app_commit": "e3547e69851165fa7b20154502aa05ad8d3481cd",
+          "build": "5",
+          "container": "jenkins-release-lab-blue",
+          "image": "jenkins-release-lab-api:lab-67f4557b0adb-b5",
+          "image_id": "sha256:9df2a53a47f59ff1fcf0dd6f2a1cc747c4ee2eb5ee03f1642fcb590d1b2f0b3c",
+          "lab_commit": "67f4557b0adb7a0157b0fb8a1ae5565cd16ade9a",
+          "release": "lab-67f4557b0adb-b5",
+          "slot": "blue"
+        },
+        "build": "6",
+        "candidate": {
+          "app_commit": "e3547e69851165fa7b20154502aa05ad8d3481cd",
+          "build": "6",
+          "container": "jenkins-release-lab-green",
+          "image": "jenkins-release-lab-api:lab-67f4557b0adb-b6",
+          "image_id": "sha256:bf5ada56574375e6a70c41ffcbfcb2461b2fbb8b68f3c62a284f81367bd40af9",
+          "lab_commit": "67f4557b0adb7a0157b0fb8a1ae5565cd16ade9a",
+          "release": "lab-67f4557b0adb-b6",
+          "slot": "green"
+        },
+        "lab_commit": "67f4557b0adb7a0157b0fb8a1ae5565cd16ade9a",
+        "recorded_at": "2026-10-31T14:52:15Z",
+        "recovered": false,
+        "status": "SUCCESS",
+        "switched": true
+      },
+      "proof": {
+        "active": {
+          "app_commit": "e3547e69851165fa7b20154502aa05ad8d3481cd",
+          "build": "6",
+          "container": "jenkins-release-lab-green",
+          "image": "jenkins-release-lab-api:lab-67f4557b0adb-b6",
+          "image_id": "sha256:bf5ada56574375e6a70c41ffcbfcb2461b2fbb8b68f3c62a284f81367bd40af9",
+          "lab_commit": "67f4557b0adb7a0157b0fb8a1ae5565cd16ade9a",
+          "release": "lab-67f4557b0adb-b6",
+          "slot": "green"
+        },
+        "container": {
+          "id": "7674498c0f9dc34fc9bf85b3917b23be4b84dd4be14f58bbef86bb56707b4aab",
+          "image_id": "sha256:bf5ada56574375e6a70c41ffcbfcb2461b2fbb8b68f3c62a284f81367bd40af9",
+          "release": "lab-67f4557b0adb-b6",
+          "running": true,
+          "slot": "green"
+        },
+        "gateway": {
+          "healthy": true,
+          "release": "lab-67f4557b0adb-b6",
+          "slot": "green",
+          "status": 200
+        },
+        "metadata_source": "nginx proxy headers",
+        "recorded_at": "2026-10-31T14:52:21Z",
+        "state_sha256": "04f684e10876e284f650131c6d5c32e46bb632d5207f749e822b152df34e5776"
+      },
+      "tests": {
+        "totalCount": 8,
+        "passCount": 8,
+        "failCount": 0,
+        "skipCount": 0
+      },
+      "smoke_probes": {
+        "candidate-smoke": {
+          "passed": true,
+          "requests": [
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/healthz",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 401,
+              "method": "GET",
+              "path": "/v1/products",
+              "replayed": false,
+              "status": 401
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/products",
+              "replayed": false,
+              "status": 201
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 201
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": true,
+              "status": 201
+            },
+            {
+              "expected_status": 409,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 409
+            },
+            {
+              "expected_status": 404,
+              "method": "GET",
+              "path": "/v1/reservations/4",
+              "replayed": false,
+              "status": 404
+            },
+            {
+              "expected_status": 404,
+              "method": "GET",
+              "path": "/v1/products/5",
+              "replayed": false,
+              "status": 404
+            },
+            {
+              "expected_status": 409,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 409
+            },
+            {
+              "expected_status": 200,
+              "method": "POST",
+              "path": "/v1/reservations/4/confirm",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/v1/products/5",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/v1/audit?limit=100",
+              "replayed": false,
+              "status": 200
+            }
+          ]
+        },
+        "smoke": {
+          "passed": true,
+          "requests": [
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/healthz",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 401,
+              "method": "GET",
+              "path": "/v1/products",
+              "replayed": false,
+              "status": 401
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/products",
+              "replayed": false,
+              "status": 201
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 201
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": true,
+              "status": 201
+            },
+            {
+              "expected_status": 409,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 409
+            },
+            {
+              "expected_status": 404,
+              "method": "GET",
+              "path": "/v1/reservations/5",
+              "replayed": false,
+              "status": 404
+            },
+            {
+              "expected_status": 404,
+              "method": "GET",
+              "path": "/v1/products/6",
+              "replayed": false,
+              "status": 404
+            },
+            {
+              "expected_status": 409,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 409
+            },
+            {
+              "expected_status": 200,
+              "method": "POST",
+              "path": "/v1/reservations/5/confirm",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/v1/products/6",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/v1/audit?limit=100",
+              "replayed": false,
+              "status": 200
+            }
+          ]
+        },
+        "postcheck": {
+          "passed": true,
+          "requests": [
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/healthz",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 401,
+              "method": "GET",
+              "path": "/v1/products",
+              "replayed": false,
+              "status": 401
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/products",
+              "replayed": false,
+              "status": 201
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 201
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": true,
+              "status": 201
+            },
+            {
+              "expected_status": 409,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 409
+            },
+            {
+              "expected_status": 404,
+              "method": "GET",
+              "path": "/v1/reservations/6",
+              "replayed": false,
+              "status": 404
+            },
+            {
+              "expected_status": 404,
+              "method": "GET",
+              "path": "/v1/products/7",
+              "replayed": false,
+              "status": 404
+            },
+            {
+              "expected_status": 409,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 409
+            },
+            {
+              "expected_status": 200,
+              "method": "POST",
+              "path": "/v1/reservations/6/confirm",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/v1/products/7",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/v1/audit?limit=100",
+              "replayed": false,
+              "status": 200
+            }
+          ]
+        }
+      },
+      "persistence_marker_preserved": true
+    },
+    {
+      "number": 7,
+      "action": "DEPLOY_UNHEALTHY",
+      "result": "FAILURE",
+      "duration_ms": 90667,
+      "deployment": {
+        "action": "DEPLOY_UNHEALTHY",
+        "before": {
+          "app_commit": "e3547e69851165fa7b20154502aa05ad8d3481cd",
+          "build": "6",
+          "container": "jenkins-release-lab-green",
+          "image": "jenkins-release-lab-api:lab-67f4557b0adb-b6",
+          "image_id": "sha256:bf5ada56574375e6a70c41ffcbfcb2461b2fbb8b68f3c62a284f81367bd40af9",
+          "lab_commit": "67f4557b0adb7a0157b0fb8a1ae5565cd16ade9a",
+          "release": "lab-67f4557b0adb-b6",
+          "slot": "green"
+        },
+        "build": "7",
+        "candidate": {
+          "app_commit": "e3547e69851165fa7b20154502aa05ad8d3481cd",
+          "build": "7",
+          "container": "jenkins-release-lab-blue",
+          "image": "jenkins-release-lab-api:lab-67f4557b0adb-b7",
+          "image_id": "sha256:ef027cb4dd2134e36a57fdb870ad7c929ebcbff8b80afcf2f30fda714ea9a03e",
+          "lab_commit": "67f4557b0adb7a0157b0fb8a1ae5565cd16ade9a",
+          "release": "lab-67f4557b0adb-b7",
+          "slot": "blue"
+        },
+        "lab_commit": "67f4557b0adb7a0157b0fb8a1ae5565cd16ade9a",
+        "reason": "Bounded health gate timed out",
+        "recorded_at": "2026-10-31T14:53:02Z",
+        "recovered": false,
+        "status": "FAILED",
+        "switched": false
+      },
+      "proof": {
+        "active": {
+          "app_commit": "e3547e69851165fa7b20154502aa05ad8d3481cd",
+          "build": "6",
+          "container": "jenkins-release-lab-green",
+          "image": "jenkins-release-lab-api:lab-67f4557b0adb-b6",
+          "image_id": "sha256:bf5ada56574375e6a70c41ffcbfcb2461b2fbb8b68f3c62a284f81367bd40af9",
+          "lab_commit": "67f4557b0adb7a0157b0fb8a1ae5565cd16ade9a",
+          "release": "lab-67f4557b0adb-b6",
+          "slot": "green"
+        },
+        "container": {
+          "id": "7674498c0f9dc34fc9bf85b3917b23be4b84dd4be14f58bbef86bb56707b4aab",
+          "image_id": "sha256:bf5ada56574375e6a70c41ffcbfcb2461b2fbb8b68f3c62a284f81367bd40af9",
+          "release": "lab-67f4557b0adb-b6",
+          "running": true,
+          "slot": "green"
+        },
+        "gateway": {
+          "healthy": true,
+          "release": "lab-67f4557b0adb-b6",
+          "slot": "green",
+          "status": 200
+        },
+        "metadata_source": "nginx proxy headers",
+        "recorded_at": "2026-10-31T14:53:50Z",
+        "state_sha256": "04f684e10876e284f650131c6d5c32e46bb632d5207f749e822b152df34e5776"
+      },
+      "tests": {
+        "totalCount": 8,
+        "passCount": 8,
+        "failCount": 0,
+        "skipCount": 0
+      },
+      "smoke_probes": {},
+      "persistence_marker_preserved": true
+    },
+    {
+      "number": 8,
+      "action": "ROLLBACK",
+      "result": "SUCCESS",
+      "duration_ms": 22710,
+      "deployment": {
+        "action": "ROLLBACK",
+        "after": {
+          "app_commit": "e3547e69851165fa7b20154502aa05ad8d3481cd",
+          "build": "5",
+          "container": "jenkins-release-lab-blue",
+          "image": "jenkins-release-lab-api:lab-67f4557b0adb-b5",
+          "image_id": "sha256:9df2a53a47f59ff1fcf0dd6f2a1cc747c4ee2eb5ee03f1642fcb590d1b2f0b3c",
+          "lab_commit": "67f4557b0adb7a0157b0fb8a1ae5565cd16ade9a",
+          "release": "lab-67f4557b0adb-b5",
+          "slot": "blue"
+        },
+        "before": {
+          "app_commit": "e3547e69851165fa7b20154502aa05ad8d3481cd",
+          "build": "6",
+          "container": "jenkins-release-lab-green",
+          "image": "jenkins-release-lab-api:lab-67f4557b0adb-b6",
+          "image_id": "sha256:bf5ada56574375e6a70c41ffcbfcb2461b2fbb8b68f3c62a284f81367bd40af9",
+          "lab_commit": "67f4557b0adb7a0157b0fb8a1ae5565cd16ade9a",
+          "release": "lab-67f4557b0adb-b6",
+          "slot": "green"
+        },
+        "build": "8",
+        "candidate": {
+          "app_commit": "e3547e69851165fa7b20154502aa05ad8d3481cd",
+          "build": "5",
+          "container": "jenkins-release-lab-blue",
+          "image": "jenkins-release-lab-api:lab-67f4557b0adb-b5",
+          "image_id": "sha256:9df2a53a47f59ff1fcf0dd6f2a1cc747c4ee2eb5ee03f1642fcb590d1b2f0b3c",
+          "lab_commit": "67f4557b0adb7a0157b0fb8a1ae5565cd16ade9a",
+          "release": "lab-67f4557b0adb-b5",
+          "slot": "blue"
+        },
+        "lab_commit": "67f4557b0adb7a0157b0fb8a1ae5565cd16ade9a",
+        "recorded_at": "2026-10-31T14:54:24Z",
+        "recovered": false,
+        "status": "SUCCESS",
+        "switched": true
+      },
+      "proof": {
+        "active": {
+          "app_commit": "e3547e69851165fa7b20154502aa05ad8d3481cd",
+          "build": "5",
+          "container": "jenkins-release-lab-blue",
+          "image": "jenkins-release-lab-api:lab-67f4557b0adb-b5",
+          "image_id": "sha256:9df2a53a47f59ff1fcf0dd6f2a1cc747c4ee2eb5ee03f1642fcb590d1b2f0b3c",
+          "lab_commit": "67f4557b0adb7a0157b0fb8a1ae5565cd16ade9a",
+          "release": "lab-67f4557b0adb-b5",
+          "slot": "blue"
+        },
+        "container": {
+          "id": "d02dd3815523382551d899f915dd1134967dcd85e6a49cabd99396cb82d89a0d",
+          "image_id": "sha256:9df2a53a47f59ff1fcf0dd6f2a1cc747c4ee2eb5ee03f1642fcb590d1b2f0b3c",
+          "release": "lab-67f4557b0adb-b5",
+          "running": true,
+          "slot": "blue"
+        },
+        "gateway": {
+          "healthy": true,
+          "release": "lab-67f4557b0adb-b5",
+          "slot": "blue",
+          "status": 200
+        },
+        "metadata_source": "nginx proxy headers",
+        "recorded_at": "2026-10-31T14:54:33Z",
+        "state_sha256": "d8a5311276e909a30449980199a0489ac43f0969c1d4ed9cb16b806cf0945fb6"
+      },
+      "tests": null,
+      "smoke_probes": {
+        "candidate-smoke": {
+          "passed": true,
+          "requests": [
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/healthz",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 401,
+              "method": "GET",
+              "path": "/v1/products",
+              "replayed": false,
+              "status": 401
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/products",
+              "replayed": false,
+              "status": 201
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 201
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": true,
+              "status": 201
+            },
+            {
+              "expected_status": 409,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 409
+            },
+            {
+              "expected_status": 404,
+              "method": "GET",
+              "path": "/v1/reservations/7",
+              "replayed": false,
+              "status": 404
+            },
+            {
+              "expected_status": 404,
+              "method": "GET",
+              "path": "/v1/products/8",
+              "replayed": false,
+              "status": 404
+            },
+            {
+              "expected_status": 409,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 409
+            },
+            {
+              "expected_status": 200,
+              "method": "POST",
+              "path": "/v1/reservations/7/confirm",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/v1/products/8",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/v1/audit?limit=100",
+              "replayed": false,
+              "status": 200
+            }
+          ]
+        },
+        "smoke": {
+          "passed": true,
+          "requests": [
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/healthz",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 401,
+              "method": "GET",
+              "path": "/v1/products",
+              "replayed": false,
+              "status": 401
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/products",
+              "replayed": false,
+              "status": 201
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 201
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": true,
+              "status": 201
+            },
+            {
+              "expected_status": 409,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 409
+            },
+            {
+              "expected_status": 404,
+              "method": "GET",
+              "path": "/v1/reservations/8",
+              "replayed": false,
+              "status": 404
+            },
+            {
+              "expected_status": 404,
+              "method": "GET",
+              "path": "/v1/products/9",
+              "replayed": false,
+              "status": 404
+            },
+            {
+              "expected_status": 409,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 409
+            },
+            {
+              "expected_status": 200,
+              "method": "POST",
+              "path": "/v1/reservations/8/confirm",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/v1/products/9",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/v1/audit?limit=100",
+              "replayed": false,
+              "status": 200
+            }
+          ]
+        },
+        "postcheck": {
+          "passed": true,
+          "requests": [
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/healthz",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 401,
+              "method": "GET",
+              "path": "/v1/products",
+              "replayed": false,
+              "status": 401
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/products",
+              "replayed": false,
+              "status": 201
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 201
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": true,
+              "status": 201
+            },
+            {
+              "expected_status": 409,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 409
+            },
+            {
+              "expected_status": 404,
+              "method": "GET",
+              "path": "/v1/reservations/9",
+              "replayed": false,
+              "status": 404
+            },
+            {
+              "expected_status": 404,
+              "method": "GET",
+              "path": "/v1/products/10",
+              "replayed": false,
+              "status": 404
+            },
+            {
+              "expected_status": 409,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 409
+            },
+            {
+              "expected_status": 200,
+              "method": "POST",
+              "path": "/v1/reservations/9/confirm",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/v1/products/10",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/v1/audit?limit=100",
+              "replayed": false,
+              "status": 200
+            }
+          ]
+        }
+      },
+      "persistence_marker_preserved": true
+    },
+    {
+      "number": 9,
+      "action": "DEPLOY_POSTCHECK_FAIL",
+      "result": "FAILURE",
+      "duration_ms": 38472,
+      "deployment": {
+        "action": "DEPLOY_POSTCHECK_FAIL",
+        "before": {
+          "app_commit": "e3547e69851165fa7b20154502aa05ad8d3481cd",
+          "build": "5",
+          "container": "jenkins-release-lab-blue",
+          "image": "jenkins-release-lab-api:lab-67f4557b0adb-b5",
+          "image_id": "sha256:9df2a53a47f59ff1fcf0dd6f2a1cc747c4ee2eb5ee03f1642fcb590d1b2f0b3c",
+          "lab_commit": "67f4557b0adb7a0157b0fb8a1ae5565cd16ade9a",
+          "release": "lab-67f4557b0adb-b5",
+          "slot": "blue"
+        },
+        "build": "9",
+        "candidate": {
+          "app_commit": "e3547e69851165fa7b20154502aa05ad8d3481cd",
+          "build": "9",
+          "container": "jenkins-release-lab-green",
+          "image": "jenkins-release-lab-api:lab-67f4557b0adb-b9",
+          "image_id": "sha256:afddb1073ab45803e93e0dba012865d20e55391e13cfb57f7339dd43b98c88f1",
+          "lab_commit": "67f4557b0adb7a0157b0fb8a1ae5565cd16ade9a",
+          "release": "lab-67f4557b0adb-b9",
+          "slot": "green"
+        },
+        "fault": "candidate stopped after proxy switch",
+        "lab_commit": "67f4557b0adb7a0157b0fb8a1ae5565cd16ade9a",
+        "reason": "HTTP smoke contract failed at request 1",
+        "recorded_at": "2026-10-31T14:55:14Z",
+        "recovered": true,
+        "status": "FAILED",
+        "switched": true
+      },
+      "proof": {
+        "active": {
+          "app_commit": "e3547e69851165fa7b20154502aa05ad8d3481cd",
+          "build": "5",
+          "container": "jenkins-release-lab-blue",
+          "image": "jenkins-release-lab-api:lab-67f4557b0adb-b5",
+          "image_id": "sha256:9df2a53a47f59ff1fcf0dd6f2a1cc747c4ee2eb5ee03f1642fcb590d1b2f0b3c",
+          "lab_commit": "67f4557b0adb7a0157b0fb8a1ae5565cd16ade9a",
+          "release": "lab-67f4557b0adb-b5",
+          "slot": "blue"
+        },
+        "container": {
+          "id": "d02dd3815523382551d899f915dd1134967dcd85e6a49cabd99396cb82d89a0d",
+          "image_id": "sha256:9df2a53a47f59ff1fcf0dd6f2a1cc747c4ee2eb5ee03f1642fcb590d1b2f0b3c",
+          "release": "lab-67f4557b0adb-b5",
+          "running": true,
+          "slot": "blue"
+        },
+        "gateway": {
+          "healthy": true,
+          "release": "lab-67f4557b0adb-b5",
+          "slot": "blue",
+          "status": 200
+        },
+        "metadata_source": "nginx proxy headers",
+        "recorded_at": "2026-10-31T14:55:25Z",
+        "state_sha256": "d8a5311276e909a30449980199a0489ac43f0969c1d4ed9cb16b806cf0945fb6"
+      },
+      "tests": {
+        "totalCount": 8,
+        "passCount": 8,
+        "failCount": 0,
+        "skipCount": 0
+      },
+      "smoke_probes": {
+        "candidate-smoke": {
+          "passed": true,
+          "recorded_at": "2026-10-31T14:55:18Z",
+          "request_count": 12,
+          "requests": [
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/healthz",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 401,
+              "method": "GET",
+              "path": "/v1/products",
+              "replayed": false,
+              "status": 401
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/products",
+              "replayed": false,
+              "status": 201
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 201
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": true,
+              "status": 201
+            },
+            {
+              "expected_status": 409,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 409
+            },
+            {
+              "expected_status": 404,
+              "method": "GET",
+              "path": "/v1/reservations/10",
+              "replayed": false,
+              "status": 404
+            },
+            {
+              "expected_status": 404,
+              "method": "GET",
+              "path": "/v1/products/11",
+              "replayed": false,
+              "status": 404
+            },
+            {
+              "expected_status": 409,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 409
+            },
+            {
+              "expected_status": 200,
+              "method": "POST",
+              "path": "/v1/reservations/10/confirm",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/v1/products/11",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/v1/audit?limit=100",
+              "replayed": false,
+              "status": 200
+            }
+          ]
+        },
+        "smoke": {
+          "passed": false,
+          "recorded_at": "2026-10-31T14:55:21Z",
+          "request_count": 1,
+          "requests": [
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/healthz",
+              "replayed": false,
+              "status": 504
+            }
+          ]
+        },
+        "recovery-smoke": {
+          "passed": true,
+          "recorded_at": "2026-10-31T14:55:24Z",
+          "request_count": 12,
+          "requests": [
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/healthz",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 401,
+              "method": "GET",
+              "path": "/v1/products",
+              "replayed": false,
+              "status": 401
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/products",
+              "replayed": false,
+              "status": 201
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 201
+            },
+            {
+              "expected_status": 201,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": true,
+              "status": 201
+            },
+            {
+              "expected_status": 409,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 409
+            },
+            {
+              "expected_status": 404,
+              "method": "GET",
+              "path": "/v1/reservations/11",
+              "replayed": false,
+              "status": 404
+            },
+            {
+              "expected_status": 404,
+              "method": "GET",
+              "path": "/v1/products/12",
+              "replayed": false,
+              "status": 404
+            },
+            {
+              "expected_status": 409,
+              "method": "POST",
+              "path": "/v1/reservations",
+              "replayed": false,
+              "status": 409
+            },
+            {
+              "expected_status": 200,
+              "method": "POST",
+              "path": "/v1/reservations/11/confirm",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/v1/products/12",
+              "replayed": false,
+              "status": 200
+            },
+            {
+              "expected_status": 200,
+              "method": "GET",
+              "path": "/v1/audit?limit=100",
+              "replayed": false,
+              "status": 200
+            }
+          ]
+        }
+      },
+      "failed_http_status": 504,
+      "recovery_request_count": 12,
+      "persistence_marker_preserved": true
+    }
+  ],
+  "checks": {
+    "unhealthy_candidate_preserved_active": true,
+    "manual_rollback_restored_original_image": true,
+    "post_cutover_failure_recovered": true,
+    "data_persisted_across_all_five_builds": true
+  },
+  "recorded_at": "2026-10-31T14:55:32Z"
+}
