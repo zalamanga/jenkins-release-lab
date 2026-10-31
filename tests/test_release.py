@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 from release_lab.core import (Docker, LabError, OWNER, OWNER_KEY, atomic_write,
                               private_env, read_json, state_lock, write_json)
-from release_lab.engine import Engine, PREFIX, nginx_config
+from release_lab.engine import Engine, GATEWAY, PREFIX, nginx_config
 from release_lab.junit import go_results, junit_xml
 
 
@@ -95,6 +95,86 @@ class FilesAndSafetyTests(unittest.TestCase):
         with self.assertRaises(LabError):
             nginx_config({"slot": "blue", "release": 'release"; malicious'})
         self.assertIn('X-Lab-Metadata "proxy"', nginx_config({"slot": "blue", "release": "lab-b1"}))
+
+
+class ReloadDocker:
+    def __init__(self):
+        self.worker = "10"
+        self.replacement = None
+        self.overlap = 0
+        self.reloads = 0
+        self.last_children = {self.worker}
+        self.observed_children = []
+        self.master = "1"
+
+    def assert_owned(self, name):
+        assert name == GATEWAY
+        return {"running": True}
+
+    def run(self, *args, **kwargs):
+        if args == ("exec", GATEWAY, "cat", "/var/run/nginx.pid"):
+            output = self.master + "\n"
+        elif args == ("exec", GATEWAY, "cat", "/proc/1/task/1/children"):
+            if self.replacement and self.overlap:
+                self.last_children = {self.worker, self.replacement}
+                self.overlap -= 1
+            elif self.replacement:
+                self.worker, self.replacement = self.replacement, None
+                self.last_children = {self.worker}
+            self.observed_children.append(self.last_children.copy())
+            output = " ".join(sorted(self.last_children))
+        elif args == ("exec", GATEWAY, "nginx", "-s", "reload"):
+            self.reloads += 1
+            self.replacement = str(int(self.worker) + 1)
+            self.overlap = 2
+            output = ""
+        elif args == ("exec", GATEWAY, "nginx", "-t"):
+            output = ""
+        else:
+            raise AssertionError(f"Unexpected synthetic Docker operation: {args}")
+        return subprocess.CompletedProcess(args, 0, output, "")
+
+
+class GatewayReloadTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.docker = ReloadDocker()
+        self.engine = Engine(ROOT, self.docker, {
+            "GIT_COMMIT": "a" * 40, "BUILD_NUMBER": "1", "LAB_STATE_DIR": self.temporary.name})
+        self.config = self.engine.directory / "nginx" / "default.conf"
+        self.record = {"slot": "green", "release": "lab-green-b2"}
+        atomic_write(self.config, nginx_config({"slot": "blue", "release": "lab-blue-b1"}))
+
+    def test_new_metadata_cannot_admit_smoke_while_old_workers_still_serve(self):
+        metadata_observations = []
+
+        def new_worker_already_answers(record):
+            # HTTP can return the new headers throughout both mixed generations.
+            metadata_observations.append(self.docker.last_children.copy())
+            return True
+
+        with patch.object(self.engine, "gateway_matches", side_effect=new_worker_already_answers), patch("release_lab.core.time.sleep"):
+            self.engine.switch(self.record)
+        self.assertIn({"10", "11"}, self.docker.observed_children)
+        self.assertEqual(metadata_observations, [{"11"}])
+        self.assertEqual(self.docker.reloads, 1)
+
+    def test_failed_metadata_check_restores_config_and_waits_for_recovery_generation(self):
+        old = self.config.read_bytes()
+        with patch.object(self.engine, "gateway_matches", side_effect=LabError("Synthetic proxy check failed")), patch("release_lab.core.time.sleep"):
+            with self.assertRaisesRegex(LabError, "Synthetic proxy check failed"):
+                self.engine.switch(self.record)
+        self.assertEqual(self.config.read_bytes(), old)
+        self.assertEqual(self.docker.reloads, 2)
+        self.assertEqual(self.docker.last_children, {"12"})
+
+    def test_invalid_master_pid_stops_before_proc_path_or_reload(self):
+        self.docker.master = "1/../../private"
+        with self.assertRaisesRegex(LabError, "master process metadata is invalid"):
+            self.engine.reload_gateway()
+        self.assertEqual(self.docker.reloads, 0)
+        self.assertEqual(self.docker.observed_children, [])
 
 
 class MemoryDocker:

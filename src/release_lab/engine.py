@@ -231,6 +231,32 @@ class Engine:
     def direct_url(self, record):
         return f"http://engine:{SLOTS[record['slot']]}"
 
+    def nginx_workers(self):
+        master = self.docker.run("exec", GATEWAY, "cat", "/var/run/nginx.pid", timeout=8).stdout.strip()
+        if not re.fullmatch(r"[1-9][0-9]*", master):
+            raise LabError("Gateway master process metadata is invalid")
+        output = self.docker.run("exec", GATEWAY, "cat", f"/proc/{master}/task/{master}/children",
+                                 timeout=8).stdout.split()
+        if any(not re.fullmatch(r"[1-9][0-9]*", pid) for pid in output):
+            raise LabError("Gateway worker process metadata is invalid")
+        return master, set(output)
+
+    def reload_gateway(self):
+        self.docker.run("exec", GATEWAY, "nginx", "-t")
+        master, previous = self.nginx_workers()
+        if not previous:
+            raise LabError("Gateway has no worker generation before reload")
+        self.docker.run("exec", GATEWAY, "nginx", "-s", "reload")
+
+        def old_workers_exited():
+            current_master, current = self.nginx_workers()
+            if current_master != master:
+                raise LabError("Gateway master changed during configuration reload")
+            return bool(current) and previous.isdisjoint(current)
+
+        # A new worker can answer while old workers still serve the previous config.
+        wait_until(old_workers_exited, seconds=15, interval=0.1)
+
     def switch(self, record):
         config = self.directory / "nginx" / "default.conf"
         old = config.read_text(encoding="utf-8") if config.exists() else None
@@ -240,11 +266,10 @@ class Engine:
             if existing:
                 if not existing["running"]:
                     self.docker.run("start", GATEWAY)
-                self.docker.run("exec", GATEWAY, "nginx", "-t")
-                self.docker.run("exec", GATEWAY, "nginx", "-s", "reload")
+                self.reload_gateway()
             else:
                 main_config = self.directory / "nginx-main.conf"
-                atomic_write(main_config, "worker_processes 1;\n"
+                atomic_write(main_config, "worker_processes 1;\npid /var/run/nginx.pid;\n"
                              "events { worker_connections 128; }\n"
                              "http { access_log off; include /etc/nginx/conf.d/*.conf; }\n")
                 self.docker.run("run", "--detach", "--name", GATEWAY, "--label", LABEL,
@@ -255,14 +280,15 @@ class Engine:
                                 "--mount", f"type=bind,source={main_config},target=/etc/nginx/nginx.conf,readonly",
                                 self.image_name("nginx"))
                 self.docker.run("exec", GATEWAY, "nginx", "-t")
-            # Reload is asynchronous. Wait for a new connection to observe the selected metadata.
             wait_until(lambda: self.gateway_matches(record), seconds=15, interval=0.25)
         except LabError:
             if old is not None:
                 atomic_write(config, old)
                 if self.docker.assert_owned(GATEWAY):
-                    self.docker.run("exec", GATEWAY, "nginx", "-t", check=False)
-                    self.docker.run("exec", GATEWAY, "nginx", "-s", "reload", check=False)
+                    try:
+                        self.reload_gateway()
+                    except LabError:
+                        pass
             raise
 
     def gateway_matches(self, record):

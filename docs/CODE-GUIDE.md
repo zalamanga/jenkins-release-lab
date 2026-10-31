@@ -117,7 +117,10 @@ Dua belas request mencakup health, penolakan tanpa autentikasi, produk, reservat
 | `ensure_release` | Membuat ulang container bila image/label/status tidak sesuai, kemudian menjalankan health gate |
 | `gate` | Menunggu container terpilih serta `/healthz` sehat sebelum perubahan trafik |
 | `direct_url` | Menunjuk port slot pada host jaringan daemon DinD agar kandidat dapat diperiksa sebelum cutover |
-| `switch` | Menulis konfigurasi gateway, memvalidasi Nginx, melakukan reload, lalu menunggu metadata release baru; mencoba mengembalikan konfigurasi lama bila switch gagal |
+| `nginx_workers` | Membaca PID master dari berkas PID gateway dan PID anaknya melalui `/proc`; hanya menerima PID numerik dan membaca metadata proses yang terbatas |
+| `reload_gateway` | Memvalidasi konfigurasi, mencatat generasi worker lama, mengirim reload, lalu menunggu semua PID lama keluar dan worker baru hadir dengan master yang sama |
+| `old_workers_exited` di dalam `reload_gateway` | Predicate polling berbatas waktu yang menolak perubahan master dan memerlukan generasi baru tanpa satu pun PID worker lama |
+| `switch` | Menulis konfigurasi gateway, menunggu pergantian generasi worker saat reload, lalu memeriksa metadata release; mencoba mengembalikan konfigurasi lama melalui jalur reload yang sama bila switch gagal |
 | `gateway_matches` | Memeriksa health dan header release/slot melalui gateway setelah reload |
 | `smoke` | Menjalankan HTTP smoke dan tetap menulis laporan request yang sempat dikerjakan ketika pemeriksaan gagal |
 | `proof` | Mencatat hash byte state, active record, image ID container, status running, dan health/metadata gateway tanpa mengeluarkan environment privat |
@@ -129,6 +132,8 @@ Dua belas request mencakup health, penolakan tanpa autentikasi, produk, reservat
 | `audit_reports` | Memeriksa allowlist laporan, menolak symlink/format rusak dan materi kredensial sebelum archive publik |
 
 `deploy` menyimpan `switched` dan `recovered` secara terpisah. Kandidat tidak sehat berhenti sebelum switch. Gangguan post-check menghentikan kandidat setelah switch, sehingga jalur recovery perlu menghidupkan dan memilih kembali old release. State previous tetap menyimpan image ID meskipun container pada slot itu sudah ditimpa kandidat gagal.
+
+Reload Nginx bersifat asinkron. Response dengan header release baru dapat muncul ketika worker lama masih melayani koneksi dengan konfigurasi sebelumnya. Karena itu, engine menunggu generasi worker lama selesai sebelum membuka pemeriksaan HTTP berikutnya. Konfigurasi lab memakai satu worker dan tidak menjalankan cache helper, sehingga daftar anak master merupakan generasi worker yang ditunggu. Pemeriksaan memakai polling proses berbatas waktu, kemudian tetap mencocokkan health serta metadata gateway. Lihat [alur reload Nginx](https://nginx.org/en/docs/control.html).
 
 ## Laporan per build
 
@@ -182,7 +187,7 @@ Compose menjalankan tiga container luar. Container aplikasi, Nginx, PostgreSQL d
 
 Fungsi `initialize(git_ref)` pada [init_env.py](../scripts/init_env.py) mempertahankan konfigurasi yang sudah ada, menghasilkan secret yang masih kosong dengan `secrets.token_hex(32)`, dan memvalidasi format 64 karakter hex. Referensi SCM hanya boleh `main` atau commit penuh. Fungsi menulis konfigurasi, placeholder env agent sebelum bootstrap, kredensial lokal, dan direktori sementara. Nilai secret tidak muncul pada hasil JSON command.
 
-Fungsi `job_xml(values)` pada [bootstrap.py](../scripts/bootstrap.py) menyusun konfigurasi job Jenkins sebagai XML. Parameter berisi empat aksi lab. Definition `CpsScmFlowDefinition` menunjuk repository lab dan path Jenkinsfile, dengan branch `main` atau SHA yang dipatok.
+Fungsi `job_xml(values)` pada [bootstrap.py](../scripts/bootstrap.py) menyusun konfigurasi job Jenkins sebagai XML. Parameter berisi empat aksi lab. Definition `CpsScmFlowDefinition` menunjuk repository lab dan path Jenkinsfile, dengan branch `main` atau SHA yang dipatok. Mode lightweight hanya diaktifkan untuk `main`; referensi SHA penuh memakai checkout SCM penuh agar Jenkins memuat pipeline dari commit yang tepat.
 
 Fungsi `bootstrap(timeout, wait_agent)` pada [bootstrap.py](../scripts/bootstrap.py) menunggu API terautentikasi dan memeriksa 0 executor controller. Mode biasa mengambil secret node secara privat lalu membuat atau memperbarui job. Mode `wait_agent` menunggu node `builder` online dan memeriksa tepat 1 executor. Fungsi tidak mencetak secret yang diterima.
 
@@ -235,6 +240,9 @@ Laporan UI berisi hasil, versi Jenkins yang dibaca verifier, daftar pemeriksaan,
 | `test_unowned_container_cannot_be_removed` | Label owner yang tidak sesuai menghentikan operasi remove |
 | `test_docker_error_redacts_private_stderr_and_argv` | Pesan kegagalan Docker tidak memuat secret dari argumen atau stderr |
 | `test_nginx_metadata_is_validated` | Release ID yang dapat menyisipkan konfigurasi ditolak |
+| `test_new_metadata_cannot_admit_smoke_while_old_workers_still_serve` | Metadata HTTP baru belum membuka gate ketika generasi worker lama dan baru masih bersamaan; pemeriksaan metadata baru dijalankan setelah PID lama keluar |
+| `test_failed_metadata_check_restores_config_and_waits_for_recovery_generation` | Kegagalan pemeriksaan metadata mengembalikan byte konfigurasi lama dan menunggu generasi worker recovery sebelum mengembalikan error asal |
+| `test_invalid_master_pid_stops_before_proc_path_or_reload` | PID master yang tidak numerik ditolak sebelum dipakai menyusun path proses atau mengirim reload |
 | `test_two_healthy_releases_alternate_slots_and_preserve_previous_image` | Dua deployment bergantian slot dan menyimpan previous image ID |
 | `test_unhealthy_candidate_cannot_change_committed_state` | Health gate gagal mempertahankan byte state dan active release |
 | `test_rollback_recreates_image_after_previous_slot_overwritten` | Rollback membuat kembali previous image walaupun slot telah diisi kandidat gagal |
@@ -245,6 +253,8 @@ Laporan UI berisi hasil, versi Jenkins yang dibaca verifier, daftar pemeriksaan,
 | `test_secret_scanner_blocks_credentials_and_unexpected_reports` | Archive guard menolak materi secret dan nama laporan di luar allowlist |
 
 Helper `ResultTests.output` membuat fixture baris hasil Go. `MemoryDocker.__init__`, `image`, `assert_owned`, dan `stop` menyimpan metadata container dalam memori. Override `SimulatedEngine.infrastructure`, `start_release`, `gate`, `switch`, `smoke`, dan `proof` mengganti efek eksternal dengan state tes. `DeploymentTests.setUp` membuat direktori sementara; `engine` menyusun environment fixture; `deploy` menahan stdout tes; `two_healthy` menyiapkan baseline dua release.
+
+`ReloadDocker.__init__` menyiapkan PID generasi sintetis; `assert_owned` memeriksa nama gateway fixture, dan `run` menyimulasikan dua generasi yang sempat hidup bersamaan setelah reload. `GatewayReloadTests.setUp` membuat konfigurasi lama pada direktori sementara. Callback `new_worker_already_answers` sengaja mengizinkan metadata baru sejak awal, sehingga tes memerlukan barrier proses untuk menahan perpindahan sebelum worker lama keluar.
 
 [test_smoke.py](../tests/test_smoke.py) menyalakan HTTP server sungguhan pada loopback, dengan kontrak response sebagai fixture. Ini menguji transport dan pemeriksaan client smoke; server tersebut bukan aplikasi ReserveFlow dan tidak memakai PostgreSQL.
 

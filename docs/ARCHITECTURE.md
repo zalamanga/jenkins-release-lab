@@ -50,7 +50,7 @@ Setiap deployment sehat menghasilkan release ID baru dari commit aplikasi yang s
 4. Build menghasilkan image rilis. Release engine mencatat tag, image ID, identitas source, dan release ID.
 5. Engine menyiapkan kandidat pada slot yang tidak aktif, dengan database deployment yang sama.
 6. Health gate memeriksa kandidat sebelum gateway memilihnya.
-7. Gateway berpindah ke kandidat. HTTP smoke memeriksa perilaku API melalui jalur trafik tersebut.
+7. Gateway memvalidasi konfigurasi dan melakukan reload. Engine menunggu generasi worker lama keluar sebelum memeriksa metadata serta menjalankan HTTP smoke pada jalur kandidat.
 8. Engine menyimpan state serta laporan, dan Jenkins mengarsipkan laporan yang dipilih.
 
 Tes integrasi dan HTTP smoke memiliki tugas berbeda. Tes Go memeriksa transaksi serta konkurensi dengan database nyata. Smoke memeriksa jalur HTTP deployment dan gateway. Keberadaan endpoint health tidak menggantikan pemeriksaan perilaku API.
@@ -58,6 +58,8 @@ Tes integrasi dan HTTP smoke memiliki tugas berbeda. Tes Go memeriksa transaksi 
 ## Blue-green dan pemulihan
 
 State menyimpan active release dan previous release. Masing-masing memuat identitas image yang dibangun. Slot blue dan green adalah tempat menjalankan container; image ID adalah identitas isi image. Perbedaan ini diperlukan ketika sebuah container sudah tidak ada. State history hanya memuat perubahan yang berhasil, sedangkan history percobaan privat mencatat juga deployment yang gagal.
+
+Reload Nginx memulai worker dengan konfigurasi baru dan meminta worker lama menyelesaikan koneksinya. Satu response dengan header release baru belum membuktikan bahwa generasi lama sudah selesai. Gateway lab memakai satu worker tanpa cache helper; engine mencatat PID anak master sebelum reload, lalu melakukan polling berbatas waktu sampai semua PID lama keluar dan generasi baru hadir. Setelah itu, health dan header release diperiksa kembali sebelum HTTP smoke. Pemulihan konfigurasi memakai mekanisme pergantian generasi yang sama. Perilaku ini mengikuti [dokumentasi kontrol Nginx](https://nginx.org/en/docs/control.html).
 
 Pada `DEPLOY_UNHEALTHY`, engine sengaja membuat kandidat yang tidak lolos pemeriksaan. Gateway tetap menunjuk active release. Build gagal dan laporan merekam alasan penolakan.
 

@@ -13,20 +13,22 @@ const base = (env.LAB_JENKINS_URL || 'http://127.0.0.1:8110/').replace(/\/$/, ''
 assert.ok(['127.0.0.1', 'localhost'].includes(new URL(base).hostname));
 const browser = await chromium.launch({ headless: true, ...(process.env.LAB_BROWSER_CHANNEL ? { channel: process.env.LAB_BROWSER_CHANNEL } : {}) });
 const page = await browser.newPage({ viewport: { width: 1440, height: 1100 }, reducedMotion: 'reduce' });
+page.setDefaultTimeout(60_000);
+page.setDefaultNavigationTimeout(120_000);
 const pageErrors = [];
 page.on('pageerror', error => pageErrors.push(error.message));
 let phase = 'login';
 const checks = [];
 async function navigate(url) {
-  const response = await page.goto(url);
+  const response = await page.goto(url, { waitUntil: 'domcontentloaded' });
   assert.equal(response.status(), 200, 'A Jenkins evidence page must return HTTP 200');
 }
 try {
   await navigate(`${base}/login?from=%2Fjob%2F${proof.job}%2F`);
   await page.locator('input[name="j_username"]').fill(env.LAB_JENKINS_USER);
   await page.locator('input[name="j_password"]').fill(env.LAB_JENKINS_PASSWORD);
-  await page.locator('button[type="submit"]').click();
-  await page.waitForURL(`**/job/${proof.job}/`);
+  await page.locator('button[type="submit"]').click({ noWaitAfter: true });
+  await page.waitForURL(`**/job/${proof.job}/`, { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: proof.job, exact: true })).toBeVisible();
   await fs.mkdir(new URL('docs/screenshots/', root), { recursive: true });
   phase = 'job-overview';
