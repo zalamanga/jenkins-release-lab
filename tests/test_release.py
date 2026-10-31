@@ -97,6 +97,22 @@ class FilesAndSafetyTests(unittest.TestCase):
         self.assertIn('X-Lab-Metadata "proxy"', nginx_config({"slot": "blue", "release": "lab-b1"}))
 
 
+class DatabaseReadinessTests(unittest.TestCase):
+    def test_short_exec_timeout_can_recover_within_database_startup_deadline(self):
+        engine = Engine(ROOT, Docker(), {"GIT_COMMIT": "a" * 40, "BUILD_NUMBER": "1"})
+        with patch.object(engine.docker, "run", side_effect=[LabError("Docker exec did not complete"),
+                          subprocess.CompletedProcess([], 0, "", "")]) as probe, patch("release_lab.core.time.sleep"):
+            engine.wait_database()
+        self.assertEqual(probe.call_count, 2)
+
+    def test_persistent_exec_timeouts_do_not_claim_database_ready(self):
+        engine = Engine(ROOT, Docker(), {"GIT_COMMIT": "a" * 40, "BUILD_NUMBER": "1"})
+        with patch.object(engine.docker, "run", side_effect=LabError("Docker exec did not complete")), \
+                patch("release_lab.core.time.monotonic", side_effect=[0, 0, 61]), patch("release_lab.core.time.sleep"):
+            with self.assertRaisesRegex(LabError, "Bounded health gate timed out"):
+                engine.wait_database()
+
+
 class ReloadDocker:
     def __init__(self):
         self.worker = "10"

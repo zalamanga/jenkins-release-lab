@@ -110,7 +110,7 @@ Dua belas request mencakup health, penolakan tanpa autentikasi, produk, reservat
 | `build_image` | Menjalankan build target Docker upstream sambil memberi label owner, source lab, source aplikasi, build, dan release |
 | `test` | Membuat image tes, PostgreSQL sementara, dan runner; memerlukan database nyata, membuat laporan hasil Go/JUnit, lalu membersihkan container dan env file tes |
 | `package` | Membangun target runtime, membaca image ID, dan menyimpan metadata package |
-| `wait_database` | Menunggu `pg_isready` pada database yang dimaksud dengan batas waktu |
+| `wait_database` | Menunggu `pg_isready` dengan batas startup 60 detik; helper `ready` mengulang bila pemanggilan Docker singkat mengalami timeout, tanpa menganggap database siap |
 | `infrastructure` | Menyiapkan network, volume, dan PostgreSQL deployment milik lab; memakai kembali data yang ada |
 | `start_release` | Membuat container slot dari image ID, menulis DSN privat dan hash key tenant; skenario tidak sehat memakai koneksi database yang sengaja gagal |
 | `selected` | Memeriksa container berjalan dengan image ID, label release dan slot yang diharapkan |
@@ -243,6 +243,8 @@ Laporan UI berisi hasil, versi Jenkins yang dibaca verifier, daftar pemeriksaan,
 | `test_new_metadata_cannot_admit_smoke_while_old_workers_still_serve` | Metadata HTTP baru belum membuka gate ketika generasi worker lama dan baru masih bersamaan; pemeriksaan metadata baru dijalankan setelah PID lama keluar |
 | `test_failed_metadata_check_restores_config_and_waits_for_recovery_generation` | Kegagalan pemeriksaan metadata mengembalikan byte konfigurasi lama dan menunggu generasi worker recovery sebelum mengembalikan error asal |
 | `test_invalid_master_pid_stops_before_proc_path_or_reload` | PID master yang tidak numerik ditolak sebelum dipakai menyusun path proses atau mengirim reload |
+| `test_short_exec_timeout_can_recover_within_database_startup_deadline` | Satu timeout pemanggilan readiness boleh pulih pada probe berikutnya dalam batas startup |
+| `test_persistent_exec_timeouts_do_not_claim_database_ready` | Timeout yang terus berulang berakhir pada batas startup dan tidak pernah dilaporkan sebagai database siap |
 | `test_two_healthy_releases_alternate_slots_and_preserve_previous_image` | Dua deployment bergantian slot dan menyimpan previous image ID |
 | `test_unhealthy_candidate_cannot_change_committed_state` | Health gate gagal mempertahankan byte state dan active release |
 | `test_rollback_recreates_image_after_previous_slot_overwritten` | Rollback membuat kembali previous image walaupun slot telah diisi kandidat gagal |

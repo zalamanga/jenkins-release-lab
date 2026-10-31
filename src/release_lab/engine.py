@@ -173,9 +173,14 @@ class Engine:
         print("Packaged immutable deployment version " + self.release)
 
     def wait_database(self, name=DATABASE, database="reserveflow"):
-        wait_until(lambda: self.docker.run("exec", name, "pg_isready", "--quiet", "--host", "127.0.0.1", "--username",
-                                           "reserveflow", "--dbname", database, check=False,
-                                           timeout=8).returncode == 0, seconds=60)
+        def ready():
+            try:
+                return self.docker.run("exec", name, "pg_isready", "--quiet", "--host", "127.0.0.1", "--username",
+                                       "reserveflow", "--dbname", database, check=False, timeout=8).returncode == 0
+            except LabError:
+                return False
+
+        wait_until(ready, seconds=60)
 
     def infrastructure(self, credentials):
         self.directory.mkdir(parents=True, exist_ok=True)
