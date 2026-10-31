@@ -39,7 +39,7 @@ def job_xml(values: dict[str, str]) -> bytes:
     ET.SubElement(scm, "submoduleCfg", {"class": "empty-list"})
     ET.SubElement(scm, "extensions")
     ET.SubElement(flow, "scriptPath").text = "Jenkinsfile"
-    ET.SubElement(flow, "lightweight").text = "true"
+    ET.SubElement(flow, "lightweight").text = "true" if reference == "main" else "false"
     ET.SubElement(definition, "triggers")
     ET.SubElement(definition, "disabled").text = "false"
     return ET.tostring(definition, encoding="utf-8", xml_declaration=True)

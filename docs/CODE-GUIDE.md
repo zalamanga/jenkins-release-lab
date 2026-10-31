@@ -22,11 +22,13 @@ Panduan ini memakai bahasa Indonesia untuk menjelaskan alur lab. Mulai dari defi
 
 `skipDefaultCheckout(true)` membuat tahap checkout terlihat sebagai stage tersendiri. `disableConcurrentBuilds()` mencegah dua build pada job yang sama berjalan bersamaan. `timeout` membatasi satu build, dan `buildDiscarder` membatasi build history yang dipertahankan.
 
+Pada checkout manual, `def source = checkout scm` menyimpan map metadata yang dikembalikan SCM. Pipeline kemudian mengekspor `env.GIT_COMMIT = source.GIT_COMMIT` agar command Python menerima SHA repository lab yang benar-benar di-checkout. Dengan `skipDefaultCheckout(true)`, pipeline perlu meneruskan nilai hasil checkout tersebut secara eksplisit ke environment release engine.
+
 Parameter `ACTION` memiliki empat nilai. Deploy normal, kandidat tidak sehat, dan gangguan setelah cutover melewati fetch, tes, serta package. Rollback memakai image yang telah tersimpan, sehingga melewati ketiga tahap tersebut.
 
 | Stage | Penjelasan |
 |---|---|
-| `Checkout` | `checkout scm` mengambil repository lab yang mendefinisikan job, lalu membersihkan laporan build sebelumnya pada workspace tersebut |
+| `Checkout` | `checkout scm` mengambil repository lab, hasil `source.GIT_COMMIT` diekspor ke `env.GIT_COMMIT`, lalu laporan build sebelumnya dibersihkan pada workspace tersebut |
 | `Fetch pinned upstream` | Memanggil fetch ReserveFlow sesuai commit penuh pada lock |
 | `PostgreSQL tests` | Mengikat kredensial database tes hanya untuk command tes |
 | `Package immutable release` | Membangun image rilis dan mencatat image ID serta identitas source |
@@ -53,7 +55,7 @@ Fungsi `git(*args)` di dalam `fetch` menjalankan Git pada direktori checkout ter
 
 Fungsi `main()` pada [release.py](../scripts/release.py) membaca command, membuat `Engine`, lalu memanggil method command itu. `LabError` memuat pesan yang aman untuk console publik. Exception lain menghasilkan pesan umum karena pesan library atau CLI bisa memuat input privat.
 
-`BUILD_NUMBER` dan `GIT_COMMIT` berasal dari Jenkins. Engine membentuk release ID dari commit lab dan nomor build. `WORKSPACE` menentukan lokasi laporan, dan `LAB_STATE_DIR` menunjuk state persisten lab. CLI ini dirancang untuk konteks agent, bukan pengganti tombol build dengan environment yang ditebak di host.
+`BUILD_NUMBER` berasal dari Jenkins, sedangkan `GIT_COMMIT` diteruskan secara eksplisit dari map hasil `checkout scm` pada stage `Checkout`. Engine membentuk release ID dari commit lab dan nomor build. `WORKSPACE` menentukan lokasi laporan, dan `LAB_STATE_DIR` menunjuk state persisten lab. CLI ini dirancang untuk konteks agent, bukan pengganti tombol build dengan environment yang ditebak di host.
 
 ## Fondasi pada core.py
 
@@ -167,13 +169,16 @@ Compose menjalankan tiga container luar. Container aplikasi, Nginx, PostgreSQL d
 
 | Fungsi pada [lab_config.py](../scripts/lab_config.py) | Penjelasan |
 |---|---|
+| `local_opener` | Membuat HTTP opener tanpa proxy, memakai cookie jar, dan membatasi redirect pada origin lab yang dikonfigurasi |
+| `origin` di dalam `local_opener` | Mengubah URL menjadi pasangan scheme, hostname dan port efektif agar perbandingan origin konsisten, termasuk port HTTP/HTTPS bawaan |
+| `SameOriginRedirect.redirect_request` | Memeriksa tujuan sebelum mengikuti redirect; perubahan scheme, hostname atau port ditolak sebelum header autentikasi dapat dikirim ke tujuan tersebut |
 | `configuration` | Membaca pasangan key/value dari konfigurasi lokal; berhenti bila init belum dijalankan |
 | `private_write` | Membuat direktori bila perlu, menulis UTF-8/LF, dan meminta mode berkas privat tanpa menampilkan isinya |
 | `assert_no_secrets` | Menolak byte laporan yang memuat salah satu nilai secret lokal sebelum publikasi |
 | `JenkinsClient.__init__` | Membatasi base URL pada controller lab lokal dan menyiapkan autentikasi serta cookie jar |
-| `JenkinsClient.request` | Memerlukan path relatif controller; request yang menulis mengambil CSRF crumb dengan cookie yang sama; pesan error hanya menampilkan status/path |
+| `JenkinsClient.request` | Memerlukan path relatif controller; request yang menulis mengambil CSRF crumb dengan cookie yang sama; HTTP error memakai status/path, sedangkan gangguan koneksi menjadi pesan umum yang aman |
 | `JenkinsClient.json` | Mengambil response melalui client yang sama lalu membaca JSON |
-| `JenkinsClient.ready` | Mengulang pemeriksaan API terautentikasi sampai controller siap atau timeout habis |
+| `JenkinsClient.ready` | Mengulang pemeriksaan API terautentikasi setelah gangguan koneksi atau response JSON yang belum siap, sampai controller siap atau timeout habis |
 
 Fungsi `initialize(git_ref)` pada [init_env.py](../scripts/init_env.py) mempertahankan konfigurasi yang sudah ada, menghasilkan secret yang masih kosong dengan `secrets.token_hex(32)`, dan memvalidasi format 64 karakter hex. Referensi SCM hanya boleh `main` atau commit penuh. Fungsi menulis konfigurasi, placeholder env agent sebelum bootstrap, kredensial lokal, dan direktori sementara. Nilai secret tidak muncul pada hasil JSON command.
 
@@ -198,6 +203,8 @@ Script PowerShell tersebut berjalan langsung dari blok utama dan tidak mendefini
 | `artifact` | Mengambil laporan JSON dari artifact build Jenkins, memeriksa materi secret, kemudian mem-parse hasilnya |
 | `assert_active` | Mencocokkan state active dengan container berjalan, image ID, health gateway, header slot/release dan hash state |
 | `verify` | Memeriksa executor, menjalankan lima build dengan expected result berbeda, memeriksa JUnit, membandingkan image/state, memeriksa HTTP 502 dan recovery, serta memastikan produk sentinel bertahan; hasil ditulis setelah guard secret lulus |
+
+Jika hasil build berbeda dari expected result, `verify` mengambil `consoleText` build itu untuk diagnosis. Seluruh byte console diperiksa melalui `assert_no_secrets` sebelum teks didekode dan paling banyak 6.000 karakter terakhir ditampilkan. Guard menghentikan keluaran tersebut bila ada nilai secret lokal, lalu hasil build yang tidak sesuai tetap menghentikan verifikasi. Jalur diagnosis ini hanya dipakai pada hasil yang tidak diharapkan; skenario gangguan dengan `FAILURE` yang memang diharapkan melanjutkan pemeriksaan proof dan recovery.
 
 Sentinel pada verifier merupakan produk sintetis yang dibuat melalui API dengan stok 17. Setelah setiap build, verifier membaca produk yang sama dan memerlukan `onHand` serta `available` tetap 17. Jadi pemeriksaan memakai data aplikasi yang tersimpan pada PostgreSQL deployment, bukan tanda yang hanya hidup di memori script.
 
@@ -250,6 +257,18 @@ Helper `ResultTests.output` membuat fixture baris hasil Go. `MemoryDocker.__init
 | `test_real_gateway_failure_preserves_http_status_as_evidence` | Response HTML 502 tetap tercatat sebagai HTTP 502 pada laporan gagal |
 
 `ContractHandler.log_message` menahan log fixture, `do_GET` dan `do_POST` meneruskan request ke `respond`, dan `respond` menghasilkan respons sesuai skenario tes. `HTTPContractTests.setUp` menyalakan server pada port sementara; `tearDown` menghentikan server dan thread setelah setiap tes.
+
+[test_control_client.py](../tests/test_control_client.py) memeriksa batas autentikasi pada HTTP client dan pemulihan saat controller baru mulai hidup. Semua header, cookie dan kredensial di sini merupakan fixture sintetis. Tes redirect memakai dua HTTP server nyata pada loopback; tes startup mengganti opener agar kegagalan koneksi dapat dipicu secara pasti.
+
+| Fungsi tes pada [test_control_client.py](../tests/test_control_client.py) | Perilaku yang diperiksa |
+|---|---|
+| `test_different_port_redirect_never_contacts_target` | Server asal menerima header sintetis, tetapi redirect ke port lain ditolak dan server tujuan tidak menerima request |
+| `test_different_hostname_redirect_never_contacts_target` | Redirect dari `127.0.0.1` ke `localhost` ditolak meskipun keduanya menunjuk loopback; server tujuan tetap tidak menerima request |
+| `test_same_origin_redirect_preserves_authentication_and_session_cookie` | Redirect pada origin yang sama membawa header autentikasi dan cookie sesi fixture sampai response akhir |
+| `test_connection_reset_becomes_a_sanitized_public_error` | `ConnectionResetError` diubah menjadi `RuntimeError` yang aman tanpa menyalin detail privat dari exception |
+| `test_ready_recovers_after_one_connection_reset` | Pemeriksaan readiness mencoba kembali setelah satu reset dan mengembalikan JSON controller dari percobaan berikutnya |
+
+`RedirectHandler.log_message` menahan log fixture, sedangkan `do_GET` mencatat path serta header sintetis lalu mengirim redirect atau JSON. `RedirectTests.setUp` menyiapkan server asal dan tujuan melalui helper `server`; callback `close` menghentikan server dan thread pada cleanup. `FakeResponse` memakai stream byte sebagai response fixture. Helper `StartupRecoveryTests.client` membuat client dengan identitas sintetis; opener mock memisahkan pengujian retry dari kondisi Jenkins yang sebenarnya.
 
 ## Workflow GitHub Actions
 
