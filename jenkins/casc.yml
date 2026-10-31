@@ -1,0 +1,64 @@
+jenkins:
+  systemMessage: "ReserveFlow release lab: isolated local Jenkins and Docker engine."
+  numExecutors: 0
+  mode: EXCLUSIVE
+  slaveAgentPort: -1
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "${LAB_JENKINS_USER}"
+          password: "${LAB_JENKINS_PASSWORD}"
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+  crumbIssuer:
+    standard:
+      excludeClientIPFromCrumb: true
+  nodes:
+    - permanent:
+        name: builder
+        labelString: release-builder
+        remoteFS: /workspace
+        numExecutors: 1
+        mode: EXCLUSIVE
+        launcher:
+          inbound:
+            workDirSettings:
+              disabled: false
+              failIfWorkDirIsMissing: true
+              internalDir: remoting
+              workDirPath: /workspace
+        retentionStrategy: always
+
+unclassified:
+  location:
+    url: http://127.0.0.1:8110/
+  scmGit:
+    globalConfigName: Jenkins Release Lab
+    globalConfigEmail: jenkins@localhost
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - string:
+              scope: GLOBAL
+              id: lab-db-password
+              secret: "${LAB_DB_PASSWORD}"
+              description: Isolated release database password
+          - string:
+              scope: GLOBAL
+              id: lab-test-db-password
+              secret: "${LAB_TEST_DB_PASSWORD}"
+              description: Isolated test database password
+          - string:
+              scope: GLOBAL
+              id: lab-alpha-key
+              secret: "${LAB_ALPHA_API_KEY}"
+              description: Smoke test alpha tenant API key
+          - string:
+              scope: GLOBAL
+              id: lab-beta-key
+              secret: "${LAB_BETA_API_KEY}"
+              description: Smoke test beta tenant API key

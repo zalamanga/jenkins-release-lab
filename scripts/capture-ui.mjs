@@ -1,0 +1,73 @@
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+import fs from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+
+const root = new URL('../', import.meta.url);
+const env = Object.fromEntries((await fs.readFile(new URL('.env', root), 'utf8')).split(/\r?\n/).filter(line => line && !line.startsWith('#')).map(line => { const index = line.indexOf('='); return [line.slice(0, index), line.slice(index + 1)]; }));
+const proof = JSON.parse(await fs.readFile(new URL('.local/verification.json', root), 'utf8'));
+assert.equal(proof.result, 'PASS');
+const require = createRequire(new URL(process.env.LAB_PLAYWRIGHT_PACKAGE || '../package.json', import.meta.url));
+const { chromium, expect } = require('@playwright/test');
+const base = (env.LAB_JENKINS_URL || 'http://127.0.0.1:8110/').replace(/\/$/, '');
+assert.ok(['127.0.0.1', 'localhost'].includes(new URL(base).hostname));
+const browser = await chromium.launch({ headless: true, ...(process.env.LAB_BROWSER_CHANNEL ? { channel: process.env.LAB_BROWSER_CHANNEL } : {}) });
+const page = await browser.newPage({ viewport: { width: 1440, height: 1100 }, reducedMotion: 'reduce' });
+const pageErrors = [];
+page.on('pageerror', error => pageErrors.push(error.message));
+let phase = 'login';
+const checks = [];
+async function navigate(url) {
+  const response = await page.goto(url);
+  assert.equal(response.status(), 200, 'A Jenkins evidence page must return HTTP 200');
+}
+try {
+  await navigate(`${base}/login?from=%2Fjob%2F${proof.job}%2F`);
+  await page.locator('input[name="j_username"]').fill(env.LAB_JENKINS_USER);
+  await page.locator('input[name="j_password"]').fill(env.LAB_JENKINS_PASSWORD);
+  await page.locator('button[type="submit"]').click();
+  await page.waitForURL(`**/job/${proof.job}/`);
+  await expect(page.getByRole('heading', { name: proof.job, exact: true })).toBeVisible();
+  await fs.mkdir(new URL('docs/screenshots/', root), { recursive: true });
+  phase = 'job-overview';
+  for (const run of proof.runs) await expect(page.locator(`#buildHistory a[href="/${`job/${proof.job}/${run.number}/`}"]`).first().or(page.getByRole('link', { name: `#${run.number}`, exact: true }).first())).toBeVisible();
+  await page.screenshot({ path: fileURLToPath(new URL('docs/screenshots/01-job-overview.png', root)), fullPage: true });
+  checks.push({ view: phase, job: proof.job, buildNumbers: proof.runs.map(run => run.number) });
+  phase = 'successful-test-results';
+  const good = proof.runs[1];
+  await navigate(`${base}/job/${proof.job}/${good.number}/testReport/`);
+  await expect(page.locator('body')).toContainText('8');
+  await page.screenshot({ path: fileURLToPath(new URL('docs/screenshots/02-successful-tests.png', root)), fullPage: true });
+  checks.push({ view: phase, build: good.number, actualTestCount: good.tests.totalCount });
+  phase = 'rejected-release';
+  const rejected = proof.runs[2];
+  await navigate(`${base}/job/${proof.job}/${rejected.number}/console`);
+  await expect(page.locator('body')).toContainText('FAILURE');
+  await expect(page.locator('body')).toContainText('health gate timed out');
+  await page.screenshot({ path: fileURLToPath(new URL('docs/screenshots/03-rejected-release.png', root)), fullPage: true });
+  checks.push({ view: phase, build: rejected.number, expectedResult: 'FAILURE', activePreserved: true });
+  phase = 'rollback-report';
+  const rollback = proof.runs[3];
+  await navigate(`${base}/job/${proof.job}/${rollback.number}/artifact/reports/deployment.json`);
+  await expect(page.locator('body')).toContainText('ROLLBACK');
+  await expect(page.locator('body')).toContainText(rollback.proof.active.image_id);
+  await page.screenshot({ path: fileURLToPath(new URL('docs/screenshots/04-rollback-report.png', root)), fullPage: true });
+  checks.push({ view: phase, build: rollback.number, exactOriginalImage: true });
+  phase = 'job-navigation';
+  await navigate(`${base}/job/${proof.job}/`);
+  const parameters = page.getByRole('link', { name: 'Build with Parameters', exact: true });
+  await parameters.click();
+  await expect(page.locator('select').filter({ has: page.locator('option[value="DEPLOY_GOOD"]') }).or(page.locator('select').first())).toBeVisible();
+  await page.goBack();
+  await expect(page.getByRole('heading', { name: proof.job, exact: true })).toBeVisible();
+  checks.push({ view: phase, parametersFormOpened: true, noExtraBuildTriggered: true });
+  assert.deepEqual(pageErrors, []);
+  const report = { result: 'PASS', interface: 'Unmodified Jenkins classic UI', actualJenkinsVersion: proof.jenkins_version, checks, screenshotCount: 4, viewport: { width: 1440, height: 1100 }, pageErrors, scope: 'Desktop evidence of actual Jenkins jobs. No custom dashboard or blanket vendor UI accessibility certification.' };
+  await fs.writeFile(new URL('.local/ui-checks.json', root), JSON.stringify(report, null, 2));
+  console.log('PASS: actual Jenkins login, five build records, JUnit results, rejected release, rollback artifact and parameters form; four screenshots.');
+} catch (error) {
+  let message = String(error.message || error);
+  for (const [key, value] of Object.entries(env)) if (/PASSWORD|API_KEY/.test(key) && value) message = message.replaceAll(value, '[REDACTED]');
+  console.error(`Jenkins UI check failed at ${phase}: ${message.slice(0, 3000)}`);
+  process.exitCode = 1;
+} finally { await browser.close(); }

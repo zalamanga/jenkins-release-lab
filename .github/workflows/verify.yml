@@ -1,0 +1,134 @@
+name: Verify actual Jenkins release lab
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths-ignore:
+      - README.md
+      - docs/**
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jenkins-release-lab-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  jenkins:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+      COMPOSE_PARALLEL_LIMIT: "1"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          package-manager-cache: false
+
+      - name: Test release engine
+        run: python -m unittest discover -s tests -v
+
+      - name: Create private runner configuration
+        run: python scripts/init_env.py --git-ref "$GITHUB_SHA"
+
+      - name: Build lab images sequentially
+        run: |
+          docker compose build controller
+          docker compose build agent
+          docker compose build engine
+
+      - name: Export built runtime images before startup
+        id: runtime_export
+        continue-on-error: true
+        run: |
+          docker compose config --images > .local/runtime-images.txt
+          mapfile -t runtime_images < .local/runtime-images.txt
+          test "${#runtime_images[@]}" -eq 3
+          docker save "${runtime_images[@]}" | gzip -1 > .local/runtime-images.tar.gz
+
+      - name: Upload optional runtime images
+        if: steps.runtime_export.outcome == 'success'
+        continue-on-error: true
+        uses: actions/upload-artifact@v7
+        with:
+          name: runtime-images
+          path: .local/runtime-images.tar.gz
+          include-hidden-files: true
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+
+      - name: Start controller and isolated Docker daemon
+        run: docker compose up -d engine controller
+
+      - name: Configure actual Jenkins SCM job and agent secret
+        run: python scripts/bootstrap.py --timeout 600
+
+      - name: Connect dedicated inbound agent
+        run: |
+          docker compose up -d --no-deps agent
+          python scripts/bootstrap.py --wait-agent --timeout 300
+
+      - name: Drive and verify five actual Jenkins builds
+        run: python scripts/verify_jenkins.py --timeout 1800
+
+      - name: Capture classic Jenkins proof
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+          node scripts/capture-ui.mjs
+
+      - name: Check public proof before upload
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import sys
+          sys.path.insert(0, "scripts")
+          from lab_config import assert_no_secrets, configuration
+          values = configuration()
+          for name in ("verification.json", "ui-checks.json"):
+              path = Path(".local") / name
+              if path.is_symlink() or not path.is_file():
+                  raise SystemExit("Missing or invalid public proof file")
+              content = path.read_bytes()
+              assert_no_secrets(content, values)
+              if json.loads(content).get("result") != "PASS":
+                  raise SystemExit("Public proof did not pass")
+          for name in ("01-job-overview.png", "02-successful-tests.png",
+                       "03-rejected-release.png", "04-rollback-report.png"):
+              path = Path("docs/screenshots") / name
+              if path.is_symlink() or not path.is_file():
+                  raise SystemExit("An actual Jenkins screenshot is missing or invalid")
+          print("Public proof JSON passed the credential guard")
+          PY
+
+      - name: Upload selected public proof
+        uses: actions/upload-artifact@v7
+        with:
+          name: jenkins-release-lab-proof
+          path: |
+            .local/verification.json
+            .local/ui-checks.json
+            docs/screenshots/01-job-overview.png
+            docs/screenshots/02-successful-tests.png
+            docs/screenshots/03-rejected-release.png
+            docs/screenshots/04-rollback-report.png
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Stop only this lab without deleting volumes
+        if: always()
+        run: docker compose down --remove-orphans

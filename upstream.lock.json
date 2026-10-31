@@ -1,0 +1,16 @@
+{
+  "repository": "https://github.com/zalamanga/reserveflow-api.git",
+  "commit": "e3547e69851165fa7b20154502aa05ad8d3481cd",
+  "tests_target": "tests",
+  "runtime_target": "runtime",
+  "expected_tests": [
+    "TestCursorAndExpiryBoundary",
+    "TestLastUnitConcurrentRequests",
+    "TestConcurrentIdempotencyAndCanonicalReplay",
+    "TestAtomicRollbackAndRetry",
+    "TestExpiredHoldDoesNotBlockOrConfirm",
+    "TestCancellationReleaseAndConfirmationReplay",
+    "TestConfirmCancelRaceOneTransition",
+    "TestTenantIsolationPaginationAndValidation"
+  ]
+}

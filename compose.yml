@@ -1,0 +1,115 @@
+name: jenkins-release-lab
+
+services:
+  controller:
+    image: jenkins-release-lab-controller:2.580.2
+    build:
+      context: .
+      dockerfile: docker/controller.Dockerfile
+    restart: unless-stopped
+    init: true
+    mem_limit: 768m
+    memswap_limit: 768m
+    cpus: 1.0
+    environment:
+      JAVA_OPTS: -Xms128m -Xmx512m -Djenkins.install.runSetupWizard=false
+      CASC_JENKINS_CONFIG: /var/jenkins_home/casc.yml
+      LAB_JENKINS_USER: ${LAB_JENKINS_USER:-operator}
+      LAB_JENKINS_PASSWORD: ${LAB_JENKINS_PASSWORD:?Run scripts/init_env.py first}
+      LAB_DB_PASSWORD: ${LAB_DB_PASSWORD:?Run scripts/init_env.py first}
+      LAB_TEST_DB_PASSWORD: ${LAB_TEST_DB_PASSWORD:?Run scripts/init_env.py first}
+      LAB_ALPHA_API_KEY: ${LAB_ALPHA_API_KEY:?Run scripts/init_env.py first}
+      LAB_BETA_API_KEY: ${LAB_BETA_API_KEY:?Run scripts/init_env.py first}
+    ports:
+      - 127.0.0.1:8110:8080
+    volumes:
+      - controller_home:/var/jenkins_home
+      - ./jenkins/casc.yml:/var/jenkins_home/casc.yml:ro
+    healthcheck:
+      test: [CMD, curl, --fail, --silent, http://localhost:8080/login]
+      interval: 10s
+      timeout: 5s
+      retries: 36
+      start_period: 90s
+    networks:
+      - lab
+
+  engine:
+    image: jenkins-release-lab-engine:29.9.1
+    build:
+      context: .
+      dockerfile: docker/engine.Dockerfile
+    privileged: true
+    restart: unless-stopped
+    mem_limit: 2g
+    memswap_limit: 2g
+    cpus: 2.0
+    environment:
+      DOCKER_TLS_CERTDIR: /certs
+      DOCKER_TLS_SAN: DNS:engine
+    command: [--storage-driver=overlay2, --log-driver=local, --log-opt=max-size=10m, --log-opt=max-file=2]
+    ports:
+      - 127.0.0.1:8111:8080
+    volumes:
+      - engine_data:/var/lib/docker
+      - engine_client_certs:/certs/client
+      - agent_workspace:/workspace
+      - lab_state:/lab
+    healthcheck:
+      test: [CMD, docker, info]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
+    networks:
+      - lab
+
+  agent:
+    image: jenkins-release-lab-agent:jdk21
+    build:
+      context: .
+      dockerfile: docker/agent.Dockerfile
+    restart: unless-stopped
+    init: true
+    mem_limit: 384m
+    memswap_limit: 384m
+    cpus: 1.0
+    user: 1000:1000
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    env_file:
+      - ./.local/agent.env
+    environment:
+      JENKINS_URL: http://controller:8080
+      JENKINS_AGENT_NAME: builder
+      JENKINS_WEB_SOCKET: "true"
+      JENKINS_AGENT_WORKDIR: /workspace
+      AGENT_WORKDIR: /workspace
+      JAVA_OPTS: -Xms64m -Xmx256m
+      DOCKER_HOST: tcp://engine:2376
+      DOCKER_TLS_VERIFY: "1"
+      DOCKER_CERT_PATH: /certs/client
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - agent_workspace:/workspace
+      - lab_state:/lab
+      - engine_client_certs:/certs/client:ro
+    depends_on:
+      controller:
+        condition: service_healthy
+      engine:
+        condition: service_healthy
+    networks:
+      - lab
+
+networks:
+  lab:
+    driver: bridge
+
+volumes:
+  controller_home:
+  agent_workspace:
+  lab_state:
+  engine_data:
+  engine_client_certs:

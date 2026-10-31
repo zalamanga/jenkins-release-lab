@@ -1,0 +1,28 @@
+{
+    "schemaVersion":  1,
+    "verifiedAtUtc":  "2026-10-31T13:43:17Z",
+    "jenkins":  {
+                    "core":  "2.580.2",
+                    "java":  21,
+                    "pluginLock":  "jenkins/plugins.lock.json",
+                    "pluginCount":  71
+                },
+    "images":  {
+                   "controller":  "jenkins/jenkins:2.580.2-jdk21@sha256:74401de6a6f92e1afe1b02d1c8e3d0c33f263bfb5275dd8813f9150355f2367b",
+                   "agent":  "jenkins/inbound-agent:jdk21@sha256:5069347cd3e72e5924e54c04fceb67209b41c8d0a3ab1c2b3f740e5fb2fab92a",
+                   "engine":  "docker:29.9.1-dind@sha256:3e5756e2b6dad6a5f1f5deacf0a19f9eaa2581b76ae092b2d4a118162e1d4d4e",
+                   "docker_cli":  "docker:29.9.1-cli@sha256:6fae2214c3121a28d5aa639d09032f61310b7c9c75ffbad1025f261a1b621800",
+                   "postgres":  "postgres:17.11-alpine@sha256:266d3c257594e195b309ae9d1805e54c788f1d7b375f56bf6c367aac6c917e7b",
+                   "nginx":  "nginx:1.30.6-alpine@sha256:0e52bd054126cdc040b1276c0af347aeb02a41b9cfe305d6094767ac30e97949"
+               },
+    "sources":  [
+                    "https://www.jenkins.io/doc/book/installing/docker/",
+                    "https://updates.jenkins.io/stable/update-center.actual.json",
+                    "https://registry.hub.docker.com/v2/repositories/jenkins/jenkins/tags/2.580.2-jdk21",
+                    "https://registry.hub.docker.com/v2/repositories/jenkins/inbound-agent/tags/jdk21",
+                    "https://registry.hub.docker.com/v2/repositories/library/docker/tags/29.9.1-dind",
+                    "https://registry.hub.docker.com/v2/repositories/library/docker/tags/29.9.1-cli",
+                    "https://registry.hub.docker.com/v2/repositories/library/postgres/tags/17-alpine",
+                    "https://registry.hub.docker.com/v2/repositories/library/nginx/tags/stable-alpine"
+                ]
+}
