@@ -12,9 +12,6 @@ jenkins:
   authorizationStrategy:
     loggedInUsersCanDoAnything:
       allowAnonymousRead: false
-  crumbIssuer:
-    standard:
-      excludeClientIPFromCrumb: true
   nodes:
     - permanent:
         name: builder

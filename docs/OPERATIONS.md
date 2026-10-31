@@ -87,7 +87,9 @@ Pada runner Ubuntu, workflow memasang browser dengan `npx playwright install --w
 
 ## Image runtime dari CI
 
-Sebelum container pertama dinyalakan, workflow dapat mengekspor tiga image runtime hasil build sebagai artifact `runtime-images` dengan retensi satu hari. Ekspor memakai daftar image dari Compose dan `docker save`, sehingga isinya adalah image controller, agent, dan engine. Ekspor ini tidak mengambil volume, controller home, env file, sertifikat yang baru dibuat saat runtime, database, atau cache daemon dalam DinD.
+Ekspor image hanya berjalan ketika operator memilih workflow manual dan mengaktifkan input `export_runtime_images`. Nilai awalnya `false`; push biasa tidak mengekspor atau mengunggah image runtime. Bila diaktifkan, workflow mengekspor tiga image hasil build sebelum container pertama dinyalakan sebagai artifact `runtime-images` dengan retensi satu hari.
+
+Ekspor memakai daftar image dari Compose dan `docker save`, sehingga isinya adalah image controller, agent, dan engine. Ekspor ini tidak mengambil volume, controller home, env file, sertifikat yang baru dibuat saat runtime, database, atau cache daemon dalam DinD.
 
 Artifact image bersifat opsional dan terpisah dari artifact bukti pengujian. Bila dipakai untuk mempercepat startup lokal, catat run CI serta source yang menghasilkan image tersebut. Memuat image hasil CI tidak berarti host lokal membangun sendiri image itu. Rangkaian Jenkins tetap perlu dijalankan untuk mendapatkan bukti runtime lokal.
 

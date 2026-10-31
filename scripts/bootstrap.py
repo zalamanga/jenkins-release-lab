@@ -68,7 +68,7 @@ def bootstrap(timeout: int, wait_agent: bool) -> dict:
     private_write(ROOT / ".local/agent.env", "JENKINS_SECRET=" + arguments[0].text + "\n")
     boundary = 'jenkins-lab-' + uuid.uuid4().hex
     source = (ROOT / 'Jenkinsfile').read_bytes()
-    multipart = (f'--{boundary}\r\nContent-Disposition: form-data; name="jenkinsfile"; filename="Jenkinsfile"\r\nContent-Type: text/plain\r\n\r\n'.encode() + source + f'\r\n--{boundary}--\r\n'.encode())
+    multipart = (f'--{boundary}\r\nContent-Disposition: form-data; name="jenkinsfile"\r\nContent-Type: text/plain\r\n\r\n'.encode() + source + f'\r\n--{boundary}--\r\n'.encode())
     validation, _ = client.request('/pipeline-model-converter/validate', multipart, 'multipart/form-data; boundary=' + boundary)
     if 'successfully validated' not in validation.decode('utf-8').lower():
         assert_no_secrets(validation, values)

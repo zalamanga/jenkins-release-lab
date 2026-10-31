@@ -2,6 +2,12 @@ name: Verify actual Jenkins release lab
 
 on:
   workflow_dispatch:
+    inputs:
+      export_runtime_images:
+        description: Export the three preboot runtime images as a one-day artifact
+        type: boolean
+        required: false
+        default: false
   push:
     branches: [main]
     paths-ignore:
@@ -50,6 +56,7 @@ jobs:
 
       - name: Export built runtime images before startup
         id: runtime_export
+        if: github.event_name == 'workflow_dispatch' && inputs.export_runtime_images == true
         continue-on-error: true
         run: |
           docker compose config --images > .local/runtime-images.txt
@@ -58,7 +65,7 @@ jobs:
           docker save "${runtime_images[@]}" | gzip -1 > .local/runtime-images.tar.gz
 
       - name: Upload optional runtime images
-        if: steps.runtime_export.outcome == 'success'
+        if: github.event_name == 'workflow_dispatch' && inputs.export_runtime_images == true && steps.runtime_export.outcome == 'success'
         continue-on-error: true
         uses: actions/upload-artifact@v7
         with:
