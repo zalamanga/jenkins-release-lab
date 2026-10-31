@@ -96,6 +96,9 @@ def verify(timeout: int) -> dict:
         build = trigger(client, action, timeout)
         number = build["number"]
         if build["result"] != expected:
+            console, _ = client.request(f"/job/{JOB}/{number}/consoleText")
+            assert_no_secrets(console, values)
+            print(console.decode('utf-8', errors='replace')[-6000:], flush=True)
             raise RuntimeError(f"Jenkins build {number} returned {build['result']}; expected {expected}")
         proof = artifact(client, number, "proof", values)
         deployment = artifact(client, number, "deployment", values)

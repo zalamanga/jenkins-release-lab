@@ -14,7 +14,10 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                script {
+                    def source = checkout scm
+                    env.GIT_COMMIT = source.GIT_COMMIT
+                }
                 sh '''#!/bin/sh
 set -eu
 mkdir -p reports
