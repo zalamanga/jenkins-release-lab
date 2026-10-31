@@ -13,6 +13,33 @@ Lab memakai source aplikasi yang tetap: `e3547e69851165fa7b20154502aa05ad8d3481c
 - Health gate, post-check, manual rollback, dan kegagalan yang disengaja memiliki hasil build yang bisa diperiksa.
 - PostgreSQL deployment memakai volume lab yang sama selama pergantian slot. Sentinel sintetis membuktikan data bertahan.
 
+## Bukti pelaksanaan
+
+[Verifikasi Jenkins di CI](https://github.com/zalamanga/jenkins-release-lab/actions/runs/41211924065) lulus pada source lab [`67f4557b0adb`](https://github.com/zalamanga/jenkins-release-lab/tree/67f4557b0adb7a0157b0fb8a1ae5565cd16ade9a). **34 tes Python dan delapan kasus Go lulus.** Lima skenario Jenkins juga lulus verifikasi pada runner Ubuntu dan Docker Desktop Windows. Setiap probe smoke lengkap mengirim 12 request HTTP.
+
+Dua build merah pada gambar adalah skenario gangguan yang disengaja. Kandidat tidak sehat ditolak, sedangkan gangguan setelah cutover memicu recovery. Verifier memeriksa image aktif, hash state dan data sintetis sesudahnya. Status workflow keseluruhan adalah `SUCCESS`.
+
+![Job Jenkins dengan lima build, stage tes, deployment dan rollback](docs/screenshots/01-job-overview.png)
+
+Screenshot berasal dari UI klasik Jenkins pada runner CI. Build #1 dan #2 adalah deployment sehat, #3 kandidat ditolak, #4 rollback, dan #5 gangguan setelah cutover dengan layanan dipulihkan. [Laporan CI](docs/evidence/ci-verification.json), [laporan Windows](docs/evidence/windows-verification.json), dan [identitas serta hash gambar](docs/evidence/manifest.json) menyimpan bukti yang dapat diperiksa.
+
+<details>
+<summary>Lihat hasil tes, penolakan kandidat, dan rollback</summary>
+
+Delapan kasus Go ditampilkan pada halaman JUnit Jenkins.
+
+![Jenkins JUnit menampilkan delapan tes lulus](docs/screenshots/02-successful-tests.png)
+
+Console build kandidat tidak sehat mencatat health gate yang menolak rilis.
+
+![Console Jenkins saat kandidat gagal health gate](docs/screenshots/03-rejected-release.png)
+
+Artifact rollback mencatat image ID release awal yang dipulihkan.
+
+![Artifact JSON rollback Jenkins dengan image ID yang dipulihkan](docs/screenshots/04-rollback-report.png)
+
+</details>
+
 ## Menjalankan lab
 
 Prasyarat host: Docker dengan Linux containers dan Compose v2, Git, Python 3.11+, serta PowerShell untuk script Windows. Dari root repository:
@@ -47,6 +74,7 @@ Status `FAILURE` pada dua skenario gangguan adalah hasil yang diharapkan. Lapora
 | [Operasi](docs/OPERATIONS.md) | Menyalakan lab, menjalankan job, mengambil bukti dan menghentikan stack |
 | [Persiapan interview](docs/INTERVIEW.md) | Penjelasan keputusan dan batas demonstrasi |
 | [Catatan verifikasi](docs/VERIFICATION.md) | Prosedur, hasil terukur dan lokasi bukti |
+| [Tinjauan UX](docs/UX-REVIEW.md) | Lingkup pemeriksaan, alur UI dan hasil katalog portfolio |
 
 ## Batas lab
 

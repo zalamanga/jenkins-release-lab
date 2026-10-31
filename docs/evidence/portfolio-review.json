@@ -1,0 +1,38 @@
+{
+  "result": "PASS",
+  "catalog": 99,
+  "preserved": 98,
+  "existingOrderPreserved": true,
+  "sourceHrefChecked": true,
+  "checks": [
+    {
+      "width": 1440,
+      "scroll": 1440,
+      "cardWidth": 552,
+      "imageLoaded": true
+    },
+    {
+      "width": 390,
+      "scroll": 390,
+      "cardWidth": 326,
+      "imageLoaded": true
+    },
+    {
+      "width": 320,
+      "scroll": 320,
+      "cardWidth": 256,
+      "imageLoaded": true
+    }
+  ],
+  "search": true,
+  "categoryExclusion": true,
+  "categoryInclusion": true,
+  "fullImage": true,
+  "reset": true,
+  "pageErrors": [],
+  "browser": "Microsoft Edge",
+  "screenshotLabel": "Jenkins screenshot",
+  "screenshotSha256": "e54710db32d0b12c13d13088933d1f0329d98f2c282a4b79ea880ed302df63c7",
+  "actualScreenshotBytesMatch": true,
+  "scope": "One Jenkins entry in the existing portfolio; the final source reference is recorded in its published catalog."
+}

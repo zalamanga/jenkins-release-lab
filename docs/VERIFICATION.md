@@ -33,7 +33,26 @@ Delapan tes aplikasi berasal dari source ReserveFlow yang dipatok: `TestCursorAn
 
 ## Hasil pelaksanaan
 
-Hasil runtime belum dicatat pada draft awal ini. Bagian ini akan diisi dari laporan yang dihasilkan verifier setelah Jenkins dan agent menjalankan rangkaian di atas. Sampai bukti tersebut tersedia, tabel skenario merupakan syarat verifikasi, bukan klaim keberhasilan.
+**PASS pada 31 Oktober 2026.** Source lab yang diuji adalah [`67f4557b0adb7a0157b0fb8a1ae5565cd16ade9a`](https://github.com/zalamanga/jenkins-release-lab/tree/67f4557b0adb7a0157b0fb8a1ae5565cd16ade9a); source aplikasi tetap `e3547e69851165fa7b20154502aa05ad8d3481cd`. [Run CI yang berhasil](https://github.com/zalamanga/jenkins-release-lab/actions/runs/41211924065) menjalankan Jenkins 2.580.2 sungguhan. Windows Docker Desktop menjalankan source lab yang sama.
+
+| Pemeriksaan | Hasil yang direkam |
+|---|---|
+| Release engine/control client | 34 tes Python lulus; termasuk startup timeout, redirect autentikasi dan pergantian generasi worker Nginx |
+| Source/plugin | 71 checksum SHA256 plugin dipenuhi pada build image controller |
+| Go dan PostgreSQL | Delapan kasus lulus, nol failure dan nol skip pada masing-masing empat build deployment; tujuh integrasi DB dan satu unit |
+| Lima build CI | #1 SUCCESS, #2 SUCCESS, #3 FAILURE, #4 SUCCESS, #5 FAILURE; seluruhnya sesuai skenario |
+| Lima build Windows | #5 SUCCESS, #6 SUCCESS, #7 FAILURE, #8 SUCCESS, #9 FAILURE; seluruhnya sesuai skenario |
+| HTTP smoke | 12 request untuk setiap probe yang lulus; rollback tidak mengulang tes Go |
+| Fault sesudah cutover | HTTP 504 di CI dan HTTP 504 di Windows; recovery menjalankan 12 request dan lulus |
+| State dan image | Kandidat ditolak mempertahankan active state; rollback membuat ulang image ID awal; recovery mempertahankan byte state committed |
+| Data | Produk sentinel stok 17 tetap 17 pada seluruh lima build di kedua lingkungan |
+| UI | Login, lima record build, JUnit, console penolakan, artifact rollback dan form parameter lulus di Chromium CI serta Microsoft Edge Windows; nol page error |
+
+Keluaran permanen tersedia pada [laporan CI](evidence/ci-verification.json), [laporan Windows](evidence/windows-verification.json), [pemeriksaan UI CI](evidence/ui-checks.json), [pemeriksaan UI Windows](evidence/windows-ui-checks.json), serta [manifest screenshot](evidence/manifest.json). Empat gambar yang ditampilkan README berasal dari run CI tersebut dan tidak diubah.
+
+Respons 502 dan 504 sama-sama merupakan kegagalan upstream yang diterima oleh skenario fault; laporan menyimpan status yang benar-benar diamati. Pada dua pelaksanaan di atas statusnya 504. Verifier tetap mewajibkan fault sesudah cutover, recovery yang lulus, image awal yang tepat, state yang sama, serta sentinel utuh.
+
+Build Windows #1–#4 adalah percobaan integrasi awal yang gagal dan tidak dihitung sebagai rangkaian lulus. Bukti Windows mencatat hanya rangkaian final #5–#9. Riwayat controller dipertahankan. Setelah pengujian dan capture, container lab serta Docker Desktop dihentikan; volume data tetap ada. Durasi build mencakup unduhan dan cache, sehingga tidak digunakan sebagai benchmark.
 
 ## Cara menilai bukti
 
