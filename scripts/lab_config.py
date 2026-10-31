@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import base64
 import http.cookiejar
+import http.client
 import json
 from pathlib import Path
 import time
@@ -13,6 +14,26 @@ import urllib.request
 ROOT = Path(__file__).resolve().parents[1]
 SECRET_KEYS = ("LAB_JENKINS_PASSWORD", "LAB_DB_PASSWORD", "LAB_TEST_DB_PASSWORD", "LAB_ALPHA_API_KEY", "LAB_BETA_API_KEY")
 JOB = "reserveflow-release"
+
+
+def local_opener(base: str):
+    def origin(url: str):
+        parsed = urllib.parse.urlsplit(url)
+        return parsed.scheme, parsed.hostname, parsed.port or (443 if parsed.scheme == 'https' else 80)
+
+    expected = origin(base)
+    if expected[0] != 'http' or expected[1] not in {'127.0.0.1', 'localhost', 'controller'}:
+        raise ValueError('Only the local lab origin is supported')
+
+    class SameOriginRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, request, fp, code, message, headers, new_url):
+            if origin(new_url) != expected:
+                raise ValueError('Refusing an authenticated redirect outside the configured lab origin')
+            return super().redirect_request(request, fp, code, message, headers, new_url)
+
+    return urllib.request.build_opener(urllib.request.ProxyHandler({}),
+                                      urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()),
+                                      SameOriginRedirect())
 
 
 def configuration() -> dict[str, str]:
@@ -48,7 +69,7 @@ class JenkinsClient:
             raise ValueError("Jenkins API client accepts only the local lab controller")
         token = base64.b64encode((values["LAB_JENKINS_USER"] + ":" + values["LAB_JENKINS_PASSWORD"]).encode()).decode()
         self.headers = {"Authorization": f"Basic {token}"}
-        self.opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+        self.opener = local_opener(self.base)
 
     def request(self, path: str, data: bytes | None = None, content_type: str = "application/x-www-form-urlencoded") -> tuple[bytes, object]:
         if not path.startswith("/") or path.startswith("//"):
@@ -64,7 +85,7 @@ class JenkinsClient:
                 return response.read(), response.headers
         except urllib.error.HTTPError as error:
             raise RuntimeError(f"Jenkins request failed: HTTP {error.code} at {urllib.parse.urlsplit(path).path}") from None
-        except urllib.error.URLError:
+        except (urllib.error.URLError, OSError, http.client.HTTPException):
             raise RuntimeError("The local Jenkins controller is not reachable") from None
 
     def json(self, path: str) -> dict:

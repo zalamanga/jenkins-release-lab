@@ -10,7 +10,7 @@ import urllib.parse
 import urllib.request
 import uuid
 
-from lab_config import ROOT, JOB, JenkinsClient, assert_no_secrets, configuration
+from lab_config import ROOT, JOB, JenkinsClient, assert_no_secrets, configuration, local_opener
 
 SCENARIOS = (("DEPLOY_GOOD", "SUCCESS"), ("DEPLOY_GOOD", "SUCCESS"),
              ("DEPLOY_UNHEALTHY", "FAILURE"), ("ROLLBACK", "SUCCESS"),
@@ -22,7 +22,7 @@ def api(values: dict, method: str, path: str, body: dict | None = None) -> dict:
     request = urllib.request.Request("http://127.0.0.1:8111" + path,
                                      None if body is None else json.dumps(body).encode(), headers, method=method)
     try:
-        with urllib.request.build_opener(urllib.request.ProxyHandler({})).open(request, timeout=20) as response:
+        with local_opener('http://127.0.0.1:8111').open(request, timeout=20) as response:
             return {"status": response.status, "data": json.load(response), "release": response.headers.get("X-Lab-Release"), "slot": response.headers.get("X-Lab-Slot")}
     except (urllib.error.URLError, ValueError):
         raise RuntimeError("The local API gateway did not return a successful JSON response") from None

@@ -30,7 +30,7 @@ try {
   await expect(page.getByRole('heading', { name: proof.job, exact: true })).toBeVisible();
   await fs.mkdir(new URL('docs/screenshots/', root), { recursive: true });
   phase = 'job-overview';
-  for (const run of proof.runs) await expect(page.locator(`#buildHistory a[href="/${`job/${proof.job}/${run.number}/`}"]`).first().or(page.getByRole('link', { name: `#${run.number}`, exact: true }).first())).toBeVisible();
+  for (const run of proof.runs) await expect(page.locator(`#buildHistory a[href="/${`job/${proof.job}/${run.number}/`}"]`).first().or(page.getByRole('link', { name: `#${run.number}`, exact: true }).first()).first()).toBeVisible();
   await page.screenshot({ path: fileURLToPath(new URL('docs/screenshots/01-job-overview.png', root)), fullPage: true });
   checks.push({ view: phase, job: proof.job, buildNumbers: proof.runs.map(run => run.number) });
   phase = 'successful-test-results';
@@ -57,7 +57,7 @@ try {
   await navigate(`${base}/job/${proof.job}/`);
   const parameters = page.getByRole('link', { name: 'Build with Parameters', exact: true });
   await parameters.click();
-  await expect(page.locator('select').filter({ has: page.locator('option[value="DEPLOY_GOOD"]') }).or(page.locator('select').first())).toBeVisible();
+  await expect(page.locator('select:has(option[value="DEPLOY_GOOD"])').first()).toBeVisible();
   await page.goBack();
   await expect(page.getByRole('heading', { name: proof.job, exact: true })).toBeVisible();
   checks.push({ view: phase, parametersFormOpened: true, noExtraBuildTriggered: true });

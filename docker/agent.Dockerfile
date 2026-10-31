@@ -9,5 +9,6 @@ RUN apt-get update \
     && mkdir -p /workspace /lab \
     && chown jenkins:jenkins /workspace /lab
 COPY --from=dockercli /usr/local/bin/docker /usr/local/bin/docker
+COPY --from=dockercli /usr/local/libexec/docker/cli-plugins/docker-buildx /usr/local/libexec/docker/cli-plugins/docker-buildx
 USER jenkins
 WORKDIR /workspace
