@@ -144,7 +144,7 @@ class Engine:
             self.docker.run("run", "--detach", "--name", db, "--label", LABEL,
                             "--network", NETWORK, "--memory", "256m", "--cpus", "1",
                             "--tmpfs", "/var/lib/postgresql/data:rw,size=256m",
-                            "--env-file", pg_env, self.image_name("postgres"))
+                            "--env-file", pg_env, self.image_name("postgres"), timeout=900)
             self.wait_database(db, "reserveflow_test")
             result = self.docker.run("run", "--name", runner, "--label", LABEL,
                                      "--network", NETWORK, "--memory", "192m", "--cpus", "1",
@@ -193,7 +193,7 @@ class Engine:
                             "--network", NETWORK, "--restart", "unless-stopped",
                             "--memory", "256m", "--cpus", "1", "--env-file", env_file,
                             "--mount", f"type=volume,source={VOLUME},target=/var/lib/postgresql/data",
-                            self.image_name("postgres"))
+                            self.image_name("postgres"), timeout=900)
         self.wait_database()
 
     def start_release(self, record, credentials, unhealthy=False):
@@ -278,7 +278,7 @@ class Engine:
                                 "--publish", "0.0.0.0:8080:8080",
                                 "--mount", f"type=bind,source={config.parent},target=/etc/nginx/conf.d,readonly",
                                 "--mount", f"type=bind,source={main_config},target=/etc/nginx/nginx.conf,readonly",
-                                self.image_name("nginx"))
+                                self.image_name("nginx"), timeout=900)
                 self.docker.run("exec", GATEWAY, "nginx", "-t")
             wait_until(lambda: self.gateway_matches(record), seconds=15, interval=0.25)
         except LabError:
