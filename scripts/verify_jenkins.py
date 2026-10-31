@@ -117,12 +117,11 @@ def verify(timeout: int) -> dict:
                     raise RuntimeError('A successful release did not record all twelve requests in each smoke probe')
                 run['smoke_probes'][probe] = {'passed': True, 'requests': result['requests']}
         if action != "ROLLBACK":
-            tests = client.json(f"/job/{JOB}/{number}/testReport/api/json?tree=totalCount,failCount,skipCount")
-            if tests != {"totalCount": 8, "failCount": 0, "skipCount": 0}:
-                # Jenkins adds the _class field to exported model objects.
-                if any(tests.get(key) != value for key, value in {"totalCount": 8, "failCount": 0, "skipCount": 0}.items()):
-                    raise RuntimeError("Jenkins did not record all eight upstream tests as passing")
-            run["tests"] = {key: tests[key] for key in ("totalCount", "failCount", "skipCount")}
+            tests = client.json(f"/job/{JOB}/{number}/testReport/api/json?tree=passCount,failCount,skipCount")
+            counts = {key: tests.get(key) for key in ("passCount", "failCount", "skipCount")}
+            if counts != {"passCount": 8, "failCount": 0, "skipCount": 0}:
+                raise RuntimeError("Unexpected Jenkins JUnit counts: " + json.dumps(counts))
+            run["tests"] = {"totalCount": sum(counts.values()), **counts}
         health = api(values, "GET", "/healthz")
         if health["status"] != 200 or health["data"].get("status") != "ok" or health["release"] != active["release"] or health["slot"] != active["slot"]:
             raise RuntimeError("Host-observed traffic differs from the Jenkins proof")
