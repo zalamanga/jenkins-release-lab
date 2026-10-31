@@ -22,7 +22,7 @@ class ContractHandler(BaseHTTPRequestHandler):
 
     def respond(self):
         if self.server.fail_gateway:
-            self.send_response(502)
+            self.send_response(self.server.fail_gateway)
             self.end_headers()
             self.wfile.write(b"<html>Bad Gateway</html>")
             return
@@ -103,13 +103,15 @@ class HTTPContractTests(unittest.TestCase):
         self.assertTrue(health(self.base))
 
     def test_real_gateway_failure_preserves_http_status_as_evidence(self):
-        self.server.fail_gateway = True
-        evidence = []
-        with self.assertRaises(LabError):
-            run_smoke(self.base, "alpha", "beta", evidence)
-        self.assertEqual(evidence[0]["status"], 502)
-        self.assertEqual(evidence[0]["path"], "/healthz")
-        self.assertFalse(health(self.base))
+        for status in (502, 504):
+            with self.subTest(status=status):
+                self.server.fail_gateway = status
+                evidence = []
+                with self.assertRaises(LabError):
+                    run_smoke(self.base, "alpha", "beta", evidence)
+                self.assertEqual(evidence[0]["status"], status)
+                self.assertEqual(evidence[0]["path"], "/healthz")
+                self.assertFalse(health(self.base))
 
 
 if __name__ == "__main__":

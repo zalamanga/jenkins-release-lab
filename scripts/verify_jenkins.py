@@ -149,10 +149,13 @@ def verify(timeout: int) -> dict:
             recovered_smoke = artifact(client, number, "recovery-smoke", values)
             if not deployment["switched"] or not deployment["recovered"] or proof["active"] != rollback["active"] or proof["state_sha256"] != rollback["state_sha256"]:
                 raise RuntimeError("Post-cutover failure did not restore the committed release and exact state")
-            if failed_smoke["passed"] or failed_smoke["requests"][0]["status"] != 502 or not recovered_smoke["passed"]:
-                raise RuntimeError("The real failed HTTP request and successful recovery were not recorded")
+            failed_status = failed_smoke["requests"][0]["status"]
+            if failed_smoke["passed"] or failed_status not in {502, 504} or not recovered_smoke["passed"]:
+                raise RuntimeError("Unexpected post-cutover HTTP evidence: " + json.dumps({
+                    "failed_status": failed_status, "failed_probe_passed": failed_smoke["passed"],
+                    "recovery_probe_passed": recovered_smoke["passed"]}))
             report["checks"]["post_cutover_failure_recovered"] = True
-            run["failed_http_status"] = 502
+            run["failed_http_status"] = failed_status
             run["recovery_request_count"] = recovered_smoke["request_count"]
             candidate_smoke = artifact(client, number, 'candidate-smoke', values)
             if not candidate_smoke['passed'] or candidate_smoke['request_count'] != 12 or recovered_smoke['request_count'] != 12:

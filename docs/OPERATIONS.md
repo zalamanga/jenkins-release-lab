@@ -76,10 +76,14 @@ Jangan mengganti secret database pada konfigurasi lalu berharap database yang su
 Setelah verifikasi menghasilkan build history, pasang dependency proyek dan browser screenshot:
 
 ```powershell
+$env:npm_config_cache = Join-Path (Get-Location) '.local/npm-cache'
+$env:PLAYWRIGHT_BROWSERS_PATH = Join-Path (Get-Location) '.local/browsers'
 npm ci
 npx playwright install chromium
 node .\scripts\capture-ui.mjs
 ```
+
+Jalankan instalasi dan capture pada terminal yang sama dari root repository. Kedua variabel environment hanya berlaku pada proses PowerShell tersebut dan menempatkan cache di direktori proyek pada drive D; perintah ini tidak mengubah pengaturan Windows permanen.
 
 [capture-ui.mjs](../scripts/capture-ui.mjs) membuka UI klasik Jenkins, menggunakan kredensial lokal untuk login, dan menangkap halaman bukti. Gambar disimpan pada [screenshots/](screenshots/), sedangkan `.local/ui-checks.json` mencatat pemeriksaannya. Screenshot harus berasal dari Jenkins yang sedang berjalan, dengan nilai secret tidak terlihat.
 
@@ -138,4 +142,4 @@ Jenkins lokal hanya perlu menyala ketika lab sedang dijalankan atau diperiksa. P
 | Image previous tidak ada | Rollback memerlukan image ID yang masih tersimpan pada daemon lab; jangan melakukan prune selama demonstrasi |
 | Report guard menolak archive | Periksa laporan privat secara lokal dan perbaiki sumber kebocoran atau format; jangan melewati guard |
 
-Jangan mengatasi masalah lab dengan mematikan anonymous authentication, memasang socket Docker host, menerbitkan port database/daemon, atau menghapus volume berisi data. Konfigurasi normal sudah menyediakan jalur bootstrap dan pemeriksaan yang terbatas pada resource lab.
+Jangan mengatasi masalah lab dengan menonaktifkan autentikasi, memasang socket Docker host, menerbitkan port database/daemon, atau menghapus volume berisi data. Konfigurasi normal sudah menyediakan jalur bootstrap dan pemeriksaan yang terbatas pada resource lab.

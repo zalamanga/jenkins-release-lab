@@ -207,7 +207,7 @@ Script PowerShell tersebut berjalan langsung dari blok utama dan tidak mendefini
 | `trigger` | Mengirim parameter aksi ke Jenkins, memvalidasi path queue, menunggu executable build, lalu menunggu hasil build aktual dengan timeout |
 | `artifact` | Mengambil laporan JSON dari artifact build Jenkins, memeriksa materi secret, kemudian mem-parse hasilnya |
 | `assert_active` | Mencocokkan state active dengan container berjalan, image ID, health gateway, header slot/release dan hash state |
-| `verify` | Memeriksa executor, menjalankan lima build dengan expected result berbeda, memeriksa JUnit, membandingkan image/state, memeriksa HTTP 502 dan recovery, serta memastikan produk sentinel bertahan; hasil ditulis setelah guard secret lulus |
+| `verify` | Memeriksa executor, menjalankan lima build dengan expected result berbeda, memeriksa JUnit, membandingkan image/state, memeriksa HTTP upstream 502 atau 504 dan recovery, serta memastikan produk sentinel bertahan; status HTTP yang benar-benar diterima disimpan setelah guard secret lulus |
 
 Jika hasil build berbeda dari expected result, `verify` mengambil `consoleText` build itu untuk diagnosis. Seluruh byte console diperiksa melalui `assert_no_secrets` sebelum teks didekode dan paling banyak 6.000 karakter terakhir ditampilkan. Guard menghentikan keluaran tersebut bila ada nilai secret lokal, lalu hasil build yang tidak sesuai tetap menghentikan verifikasi. Jalur diagnosis ini hanya dipakai pada hasil yang tidak diharapkan; skenario gangguan dengan `FAILURE` yang memang diharapkan melanjutkan pemeriksaan proof dan recovery.
 
@@ -264,7 +264,7 @@ Helper `ResultTests.output` membuat fixture baris hasil Go. `MemoryDocker.__init
 | `test_http_replay_without_replayed_header_fails` | Response replay tanpa header yang diwajibkan menggagalkan kontrak |
 | `test_proxy_metadata_mismatch_fails_first_request` | Header release yang tidak sesuai expected release menghentikan smoke |
 | `test_health_uses_actual_json_contract` | Health memeriksa payload JSON, bukan status HTTP saja |
-| `test_real_gateway_failure_preserves_http_status_as_evidence` | Response HTML 502 tetap tercatat sebagai HTTP 502 pada laporan gagal |
+| `test_real_gateway_failure_preserves_http_status_as_evidence` | Dua subkasus response HTML 502 dan 504 tetap menyimpan status HTTP aslinya pada laporan gagal |
 
 `ContractHandler.log_message` menahan log fixture, `do_GET` dan `do_POST` meneruskan request ke `respond`, dan `respond` menghasilkan respons sesuai skenario tes. `HTTPContractTests.setUp` menyalakan server pada port sementara; `tearDown` menghentikan server dan thread setelah setiap tes.
 
